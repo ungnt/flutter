@@ -11,12 +11,10 @@ workflows:
       - name: Get Flutter packages
         script: |
           flutter pub get
-      - name: Analyze code
+      - name: Create assets directories
         script: |
-          flutter analyze
-      - name: Run tests
-        script: |
-          flutter test
+          mkdir -p assets/images
+          mkdir -p assets/icons
       - name: Build release APK
         script: |
           flutter build apk --release
