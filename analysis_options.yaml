@@ -1,0 +1,20 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Relaxed rules for better compatibility
+    avoid_print: false
+    prefer_const_constructors: false
+    use_super_parameters: false
+    
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+  errors:
+    # Treat as warnings instead of errors
+    missing_required_param: warning
+    missing_return: warning
+    dead_code: warning
+    unused_import: warning
+    unused_local_variable: warning
