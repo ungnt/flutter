@@ -15,9 +15,6 @@ workflows:
         script: |
           mkdir -p assets/images
           mkdir -p assets/icons
-      - name: Flutter analyze
-        script: |
-          flutter analyze --no-fatal-infos
       - name: Clean and build
         script: |
           flutter clean

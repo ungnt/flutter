@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class ManutencaoModel {
   final int? id;
   final DateTime data;

@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/database_service.dart';
-import '../models/trabalho_model.dart';
-import '../models/gasto_model.dart';
-import '../models/manutencao_model.dart';
 import '../theme/app_theme.dart';
 import 'trabalho_screen.dart';
 import 'gastos_screen.dart';
 import 'manutencoes_screen.dart';
 import 'relatorios_screen.dart';
-import 'configuracoes_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

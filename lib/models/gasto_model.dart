@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class GastoModel {
   final int? id;
   final DateTime data;

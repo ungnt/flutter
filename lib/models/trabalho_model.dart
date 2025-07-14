@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class TrabalhoModel {
   final int? id;
   final DateTime data;
