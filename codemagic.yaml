@@ -15,9 +15,16 @@ workflows:
         script: |
           mkdir -p assets/images
           mkdir -p assets/icons
+      - name: Flutter analyze
+        script: |
+          flutter analyze --no-fatal-infos
+      - name: Clean and build
+        script: |
+          flutter clean
+          flutter pub get
       - name: Build release APK
         script: |
-          flutter build apk --release
+          flutter build apk --release --verbose
     artifacts:
       - build/app/outputs/**/*.apk
       - build/app/outputs/**/mapping.txt
