@@ -6,7 +6,7 @@ import '../models/trabalho_model.dart';
 import '../models/gasto_model.dart';
 import '../models/manutencao_model.dart';
 import '../theme/app_theme.dart';
-import '../widgets/financial_chart.dart';
+
 
 class RelatoriosScreen extends StatefulWidget {
   const RelatoriosScreen({super.key});

@@ -1,11 +1,11 @@
-import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/trabalho_model.dart';
-import '../models/gasto_model.dart';
-import '../models/manutencao_model.dart';
-import '../models/user_model.dart';
-import 'database_service.dart';
+
+
+
+
+
 import 'auth_service.dart';
 
 /// Serviço de sincronização simplificado

@@ -14,12 +14,8 @@ import '../lib/routes/gastos_routes.dart';
 import '../lib/routes/manutencao_routes.dart';
 import '../lib/services/auth_service.dart';
 import '../lib/services/supabase_service.dart';
-import '../lib/middleware/rate_limiter.dart';
 import '../lib/middleware/error_handler.dart';
-import '../lib/middleware/https_enforcer.dart';
 import '../lib/middleware/auth_middleware.dart';
-import '../lib/middleware/validation_middleware.dart';
-import '../lib/services/database_service.dart';
 
 final _logger = Logger('KMDollarServer');
 

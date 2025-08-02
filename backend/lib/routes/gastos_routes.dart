@@ -4,8 +4,7 @@ import 'package:shelf_router/shelf_router.dart';
 import 'package:logging/logging.dart';
 import '../models/gasto_model.dart';
 import '../services/supabase_service.dart';
-import '../services/security_service.dart';
-import '../services/conflict_resolution_service.dart';
+
 import '../middleware/auth_middleware.dart';
 
 final _logger = Logger('GastosRoutes');
