@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS trabalho CASCADE;
 DROP TABLE IF EXISTS trabalhos CASCADE;
 DROP TABLE IF EXISTS gastos CASCADE;
 DROP TABLE IF EXISTS manutencoes CASCADE;
+DROP TABLE IF EXISTS manutencao CASCADE;
 
 -- 2. TABELA TRABALHO (SINGULAR) - Alinhada com Backend e Frontend
 CREATE TABLE trabalho (
@@ -32,8 +33,8 @@ CREATE TABLE gastos (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- 4. TABELA MANUTENCOES - Alinhada com Backend e Frontend
-CREATE TABLE manutencoes (
+-- 4. TABELA MANUTENCAO - Alinhada com Backend e Frontend  
+CREATE TABLE manutencao (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   data DATE NOT NULL,
@@ -55,15 +56,15 @@ CREATE INDEX idx_gastos_data ON gastos(data);
 CREATE INDEX idx_gastos_categoria ON gastos(categoria);
 CREATE INDEX idx_gastos_user_data ON gastos(user_id, data);
 
-CREATE INDEX idx_manutencoes_user_id ON manutencoes(user_id);
-CREATE INDEX idx_manutencoes_data ON manutencoes(data);
-CREATE INDEX idx_manutencoes_tipo ON manutencoes(tipo);
-CREATE INDEX idx_manutencoes_user_data ON manutencoes(user_id, data);
+CREATE INDEX idx_manutencao_user_id ON manutencao(user_id);
+CREATE INDEX idx_manutencao_data ON manutencao(data);
+CREATE INDEX idx_manutencao_tipo ON manutencao(tipo);
+CREATE INDEX idx_manutencao_user_data ON manutencao(user_id, data);
 
 -- 6. HABILITAR ROW LEVEL SECURITY (RLS)
 ALTER TABLE trabalho ENABLE ROW LEVEL SECURITY;
 ALTER TABLE gastos ENABLE ROW LEVEL SECURITY;
-ALTER TABLE manutencoes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE manutencao ENABLE ROW LEVEL SECURITY;
 
 -- 7. POLÍTICAS RLS PARA TRABALHO
 CREATE POLICY "Users can view own trabalho" ON trabalho
@@ -91,17 +92,17 @@ CREATE POLICY "Users can update own gastos" ON gastos
 CREATE POLICY "Users can delete own gastos" ON gastos
     FOR DELETE USING (auth.uid() = user_id);
 
--- 9. POLÍTICAS RLS PARA MANUTENCOES
-CREATE POLICY "Users can view own manutencoes" ON manutencoes
+-- 9. POLÍTICAS RLS PARA MANUTENCAO
+CREATE POLICY "Users can view own manutencao" ON manutencao
     FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert own manutencoes" ON manutencoes
+CREATE POLICY "Users can insert own manutencao" ON manutencao
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update own manutencoes" ON manutencoes
+CREATE POLICY "Users can update own manutencao" ON manutencao
     FOR UPDATE USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete own manutencoes" ON manutencoes
+CREATE POLICY "Users can delete own manutencao" ON manutencao
     FOR DELETE USING (auth.uid() = user_id);
 
 -- 10. TRIGGERS PARA UPDATED_AT AUTOMÁTICO
@@ -119,7 +120,7 @@ CREATE TRIGGER update_trabalho_updated_at BEFORE UPDATE ON trabalho
 CREATE TRIGGER update_gastos_updated_at BEFORE UPDATE ON gastos
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_manutencoes_updated_at BEFORE UPDATE ON manutencoes
+CREATE TRIGGER update_manutencao_updated_at BEFORE UPDATE ON manutencao
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- 11. VERIFICAÇÃO FINAL
@@ -127,7 +128,7 @@ SELECT
     tablename,
     schemaname
 FROM pg_tables 
-WHERE tablename IN ('trabalho', 'gastos', 'manutencoes')
+WHERE tablename IN ('trabalho', 'gastos', 'manutencao')
 AND schemaname = 'public'
 ORDER BY tablename;
 
@@ -138,7 +139,7 @@ SELECT
     data_type,
     is_nullable
 FROM information_schema.columns 
-WHERE table_name IN ('trabalho', 'gastos', 'manutencoes')
+WHERE table_name IN ('trabalho', 'gastos', 'manutencao')
 AND table_schema = 'public'
 ORDER BY table_name, ordinal_position;
 

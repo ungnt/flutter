@@ -5,7 +5,7 @@ import 'package:logging/logging.dart';
 import '../models/trabalho_model.dart';
 import '../services/supabase_service.dart';
 import '../services/security_service.dart';
-import '../services/conflict_resolution_service.dart';
+
 import '../middleware/auth_middleware.dart';
 
 final _logger = Logger('TrabalhoRoutes');

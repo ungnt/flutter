@@ -41,7 +41,7 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
   List<String> _tiposManutencao = [];
   List<TrabalhoModel> _trabalhos = [];
   List<GastoModel> _gastos = [];
-  List<ManutencaoModel> _manutencoes = [];
+  List<ManutencaoModel> _manutencao = [];
   
   bool _isLoading = false;
   bool _showGastoForm = false;
@@ -104,7 +104,7 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
   }
 
   Future<void> _loadManutencoes() async {
-    _manutencoes = await _db.getManutencoes();
+    _manutencao = await _db.getManutencao();
   }
 
   Future<void> _saveRegistroCompleto() async {
@@ -456,7 +456,7 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
           DateFormat('yyyy-MM-dd').format(g.data) == 
           DateFormat('yyyy-MM-dd').format(trabalho.data)
         ).toList();
-        final manutencoesData = _manutencoes.where((m) => 
+        final manutencoesData = _manutencao.where((m) => 
           DateFormat('yyyy-MM-dd').format(m.data) == 
           DateFormat('yyyy-MM-dd').format(trabalho.data)
         ).toList();
@@ -515,7 +515,7 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
     final totalKm = _trabalhos.fold<double>(0, (sum, t) => sum + t.km);
     final totalHoras = _trabalhos.fold<double>(0, (sum, t) => sum + t.horas);
     final totalGastos = _gastos.fold<double>(0, (sum, g) => sum + g.valor);
-    final totalManutencoes = _manutencoes.fold<double>(0, (sum, m) => sum + m.valor);
+    final totalManutencoes = _manutencao.fold<double>(0, (sum, m) => sum + m.valor);
     final liquido = totalGanhos - totalGastos - totalManutencoes;
 
     return Padding(

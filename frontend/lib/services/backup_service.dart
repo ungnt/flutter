@@ -14,7 +14,7 @@ class BackupService {
 
     final trabalhos = await db.getAllTrabalhos();
     final gastos = await db.getAllGastos();
-    final manutencoes = await db.getAllManutencoes();
+    final manutencoes = await db.getAllManutencao();
 
     return {
       'version': '2.0',

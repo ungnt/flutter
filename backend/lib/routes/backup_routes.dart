@@ -50,10 +50,10 @@ class BackupRoutes {
       // Simular processamento dos dados
       final trabalhos = backupData['trabalhos'] as List? ?? [];
       final gastos = backupData['gastos'] as List? ?? [];
-      final manutencoes = backupData['manutencoes'] as List? ?? [];
+      final manutencao = backupData['manutencao'] as List? ?? [];
       final configuracoes = backupData['configuracoes'] as Map? ?? {};
       
-      final totalRecords = trabalhos.length + gastos.length + manutencoes.length;
+      final totalRecords = trabalhos.length + gastos.length + manutencao.length;
       final estimatedSize = (body.length / 1024).toStringAsFixed(1); // KB
       
       return Response.ok(
@@ -66,7 +66,7 @@ class BackupRoutes {
             'records': {
               'trabalhos': trabalhos.length,
               'gastos': gastos.length,
-              'manutencoes': manutencoes.length,
+              'manutencao': manutencao.length,
               'configuracoes': configuracoes.length
             },
             'totalRecords': totalRecords,
@@ -131,7 +131,7 @@ class BackupRoutes {
               'deviceId': 'device_001'
             }
           ],
-          'manutencoes': [],
+          'manutencao': [],
           'configuracoes': {
             'intervalos_manutencao': {
               'oleo': 3000,
@@ -171,7 +171,7 @@ class BackupRoutes {
               'records': {
                 'trabalhos': 15,
                 'gastos': 32,
-                'manutencoes': 3
+                'manutencao': 3
               },
               'deviceId': 'device_001',
               'version': '1.0.0'
@@ -183,7 +183,7 @@ class BackupRoutes {
               'records': {
                 'trabalhos': 14,
                 'gastos': 28,
-                'manutencoes': 3
+                'manutencao': 3
               },
               'deviceId': 'device_001',
               'version': '1.0.0'
@@ -275,7 +275,7 @@ class BackupRoutes {
               'mergedData': {
                 'trabalhos': [], // Dados finais após merge
                 'gastos': [],
-                'manutencoes': [],
+                'manutencao': [],
                 'configuracoes': {}
               },
               'statistics': {

@@ -4,8 +4,7 @@ import 'package:shelf_router/shelf_router.dart';
 import 'package:logging/logging.dart';
 import '../models/manutencao_model.dart';
 import '../services/supabase_service.dart';
-import '../services/security_service.dart';
-import '../services/conflict_resolution_service.dart';
+
 import '../middleware/auth_middleware.dart';
 
 final _logger = Logger('ManutencaoRoutes');
@@ -45,7 +44,7 @@ class ManutencaoRoutes {
       _logger.info('Listando manutenções para usuário: $userId');
 
       final response = await SupabaseService.client
-          .from('manutencoes')
+          .from('manutencao')
           .select()
           .eq('user_id', userId)
           .order('data', ascending: false);
@@ -57,7 +56,7 @@ class ManutencaoRoutes {
       _logger.info('${manutencoes.length} manutenções encontradas');
 
       return Response.ok(
-        json.encode({'manutencoes': manutencoes}),
+        json.encode({'manutencao': manutencoes}),
         headers: {'Content-Type': 'application/json'},
       );
     } catch (e, stackTrace) {
@@ -100,7 +99,7 @@ class ManutencaoRoutes {
       _logger.info('Criando manutenção para usuário: $userId');
 
       final response = await SupabaseService.client
-          .from('manutencoes')
+          .from('manutencao')
           .insert(manutencao.toJson())
           .select()
           .single();
@@ -141,7 +140,7 @@ class ManutencaoRoutes {
 
       // Verificar se a manutenção pertence ao usuário
       final existing = await SupabaseService.client
-          .from('manutencoes')
+          .from('manutencao')
           .select()
           .eq('id', id)
           .eq('user_id', userId)
@@ -159,14 +158,14 @@ class ManutencaoRoutes {
       if (data['data'] != null) updateData['data'] = data['data'];
       if (data['tipo'] != null) updateData['tipo'] = data['tipo'];
       if (data['valor'] != null) updateData['valor'] = (data['valor'] as num).toDouble();
-      if (data['quilometragem'] != null) updateData['quilometragem'] = (data['quilometragem'] as num).toInt();
+      if (data['km_atual'] != null) updateData['km_atual'] = (data['km_atual'] as num).toDouble();
       if (data['descricao'] != null) updateData['descricao'] = data['descricao'];
-      if (data['oficina'] != null) updateData['oficina'] = data['oficina'];
+
 
       _logger.info('Atualizando manutenção: $id');
 
       final response = await SupabaseService.client
-          .from('manutencoes')
+          .from('manutencao')
           .update(updateData)
           .eq('id', id)
           .eq('user_id', userId)
@@ -206,7 +205,7 @@ class ManutencaoRoutes {
 
       // Verificar se a manutenção pertence ao usuário
       final existing = await SupabaseService.client
-          .from('manutencoes')
+          .from('manutencao')
           .select()
           .eq('id', id)
           .eq('user_id', userId)
@@ -219,7 +218,7 @@ class ManutencaoRoutes {
       _logger.info('Deletando manutenção: $id');
 
       await SupabaseService.client
-          .from('manutencoes')
+          .from('manutencao')
           .delete()
           .eq('id', id)
           .eq('user_id', userId);
@@ -258,7 +257,7 @@ class ManutencaoRoutes {
       _logger.info('Buscando manutenções por período: $dataInicio - $dataFim');
 
       final response = await SupabaseService.client
-          .from('manutencoes')
+          .from('manutencao')
           .select()
           .eq('user_id', userId)
           .gte('data', dataInicio)
@@ -272,7 +271,7 @@ class ManutencaoRoutes {
       _logger.info('${manutencoes.length} manutenções encontradas no período');
 
       return Response.ok(
-        json.encode({'manutencoes': manutencoes}),
+        json.encode({'manutencao': manutencoes}),
         headers: {'Content-Type': 'application/json'},
       );
     } catch (e, stackTrace) {
@@ -298,7 +297,7 @@ class ManutencaoRoutes {
 
       // Query com filtro de período opcional
       var query = SupabaseService.client
-          .from('manutencoes')
+          .from('manutencao')
           .select('tipo, valor')
           .eq('user_id', userId);
 

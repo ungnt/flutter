@@ -104,26 +104,14 @@ void main() async {
       const Pipeline()
         .addMiddleware(authMiddleware(authService))
         .addHandler(TrabalhoRoutes.router))
-    ..mount('/api/trabalhos/', 
-      const Pipeline()
-        .addMiddleware(authMiddleware(authService))
-        .addHandler(TrabalhoRoutes.router)) // Alias plural
     ..mount('/api/gastos/', 
       const Pipeline()
         .addMiddleware(authMiddleware(authService))
         .addHandler(GastosRoutes.router))
-    ..mount('/api/ganhos/', 
-      const Pipeline()
-        .addMiddleware(authMiddleware(authService))
-        .addHandler(GastosRoutes.router)) // Alias ganhos
     ..mount('/api/manutencao/', 
       const Pipeline()
         .addMiddleware(authMiddleware(authService))
         .addHandler(ManutencaoRoutes.router))
-    ..mount('/api/manutencoes/', 
-      const Pipeline()
-        .addMiddleware(authMiddleware(authService))
-        .addHandler(ManutencaoRoutes.router)) // Alias plural
     
     // 404 para rotas não encontradas
     ..all('/<ignored|.*>', _notFoundHandler);

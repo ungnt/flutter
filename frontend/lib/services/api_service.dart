@@ -295,12 +295,12 @@ class ApiService {
   }
 
   // CRUD APIs - Manutenções
-  static Future<ApiResponse> uploadManutencoes(List<Map<String, dynamic>> manutencoes) async {
+  static Future<ApiResponse> uploadManutencao(List<Map<String, dynamic>> manutencoes) async {
     try {
       final response = await http.post(
         Uri.parse(_getEndpointUrl('manutencao/sync')),
         headers: await _authHeaders,
-        body: jsonEncode({'manutencoes': manutencoes}),
+        body: jsonEncode({'manutencao': manutencoes}),
       ).timeout(_timeout);
 
       return _handleResponse(response);

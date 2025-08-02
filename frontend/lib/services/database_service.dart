@@ -57,12 +57,12 @@ class DatabaseService {
 
     // Tabela de manutenções
     await db.execute('''
-      CREATE TABLE manutencoes (
+      CREATE TABLE manutencao (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         data TEXT NOT NULL,
         tipo TEXT NOT NULL,
         valor REAL NOT NULL,
-        km REAL NOT NULL,
+        km_atual REAL NOT NULL,
         descricao TEXT,
         data_registro TEXT NOT NULL
       )
@@ -284,7 +284,7 @@ class DatabaseService {
   // Métodos para manutenções
   Future<int> insertManutencao(ManutencaoModel manutencao) async {
     final db = await database;
-    return await db.insert('manutencoes', manutencao.toMap());
+    return await db.insert('manutencao', manutencao.toMap());
   }
 
   Future<List<ManutencaoModel>> getManutencoes({DateTime? dataInicio, DateTime? dataFim}) async {
@@ -298,7 +298,7 @@ class DatabaseService {
     }
 
     final List<Map<String, dynamic>> maps = await db.query(
-      'manutencoes',
+      'manutencao',
       where: where.isNotEmpty ? where : null,
       whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
       orderBy: 'data DESC',
@@ -310,7 +310,7 @@ class DatabaseService {
   Future<int> updateManutencao(ManutencaoModel manutencao) async {
     final db = await database;
     return await db.update(
-      'manutencoes',
+      'manutencao',
       manutencao.toMap(),
       where: 'id = ?',
       whereArgs: [manutencao.id],
@@ -320,7 +320,7 @@ class DatabaseService {
   Future<int> deleteManutencao(String id) async {
     final db = await database;
     return await db.delete(
-      'manutencoes',
+      'manutencao',
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -381,9 +381,9 @@ class DatabaseService {
     return maps.map((map) => GastoModel.fromMap(map)).toList();
   }
 
-  Future<List<ManutencaoModel>> getAllManutencoes() async {
+  Future<List<ManutencaoModel>> getAllManutencao() async {
     final db = await database;
-    final maps = await db.query('manutencoes', orderBy: 'data DESC');
+    final maps = await db.query('manutencao', orderBy: 'data DESC');
     return maps.map((map) => ManutencaoModel.fromMap(map)).toList();
   }
 
@@ -397,7 +397,7 @@ class DatabaseService {
 
   Future<ManutencaoModel?> getManutencaoById(int id) async {
     final db = await database;
-    final maps = await db.query('manutencoes', where: 'id = ?', whereArgs: [id]);
+    final maps = await db.query('manutencao', where: 'id = ?', whereArgs: [id]);
     if (maps.isNotEmpty) return ManutencaoModel.fromMap(maps.first);
     return null;
   }
@@ -504,7 +504,7 @@ class DatabaseService {
     await db.transaction((txn) async {
       await txn.delete('trabalho');
       await txn.delete('gastos');
-      await txn.delete('manutencoes');
+      await txn.delete('manutencao');
     });
   }
 
@@ -516,7 +516,7 @@ class DatabaseService {
     final endStr = endDate.toIso8601String().split('T')[0];
     
     final maps = await db.query(
-      'manutencoes',
+      'manutencao',
       where: 'DATE(data) >= ? AND DATE(data) <= ?',
       whereArgs: [startStr, endStr],
       orderBy: 'data DESC',
