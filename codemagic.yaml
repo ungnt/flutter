@@ -1,0 +1,32 @@
+workflows:
+  android-build:
+    name: KM$ Android APK
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    environment:
+      flutter: "3.24.0"
+      java: 17
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+    scripts:
+      - name: Setup project
+        script: |
+          cd frontend
+          flutter pub get
+      - name: Build APK
+        script: |
+          cd frontend
+          flutter build apk --release --target-platform android-arm,android-arm64
+    artifacts:
+      - frontend/build/app/outputs/flutter-apk/app-release.apk
+    publishing:
+      email:
+        recipients:
+          - santanajesse155@gmail.com
+        notify:
+          success: true
+          failure: true
