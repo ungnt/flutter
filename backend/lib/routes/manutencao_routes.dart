@@ -80,9 +80,9 @@ class ManutencaoRoutes {
 
       // Validações
       if (data['data'] == null || data['tipo'] == null || 
-          data['valor'] == null || data['quilometragem'] == null) {
+          data['valor'] == null || data['km_atual'] == null) {
         return Response(400, body: json.encode({
-          'error': 'Campos obrigatórios: data, tipo, valor, quilometragem'
+          'error': 'Campos obrigatórios: data, tipo, valor, km_atual'
         }));
       }
 
@@ -92,7 +92,7 @@ class ManutencaoRoutes {
         data: DateTime.parse(data['data']),
         tipo: data['tipo'].toString(),
         valor: (data['valor'] as num).toDouble(),
-        kmAtual: (data['quilometragem'] as num).toDouble(),
+        kmAtual: (data['km_atual'] as num).toDouble(),
         descricao: data['descricao']?.toString(),
         dataRegistro: agora,
       );

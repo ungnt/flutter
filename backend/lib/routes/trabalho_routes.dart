@@ -42,7 +42,7 @@ class TrabalhoRoutes {
       _logger.info('Listando trabalho para usuário: $userId');
 
       final response = await SupabaseService.client
-          .from('trabalhos')
+          .from('trabalho')
           .select()
           .eq('user_id', userId)
           .order('data', ascending: false);
@@ -102,7 +102,7 @@ class TrabalhoRoutes {
       _logger.info('Criando trabalho para usuário: $userId');
 
       final response = await SupabaseService.client
-          .from('trabalhos')
+          .from('trabalho')
           .insert(trabalho.toJson())
           .select()
           .single();
@@ -143,7 +143,7 @@ class TrabalhoRoutes {
 
       // Verificar se o trabalho pertence ao usuário
       final existing = await SupabaseService.client
-          .from('trabalhos')
+          .from('trabalho')
           .select()
           .eq('id', id)
           .eq('user_id', userId)
@@ -167,7 +167,7 @@ class TrabalhoRoutes {
       _logger.info('Atualizando trabalho: $id');
 
       final response = await SupabaseService.client
-          .from('trabalhos')
+          .from('trabalho')
           .update(updateData)
           .eq('id', id)
           .eq('user_id', userId)
@@ -207,7 +207,7 @@ class TrabalhoRoutes {
 
       // Verificar se o trabalho pertence ao usuário
       final existing = await SupabaseService.client
-          .from('trabalhos')
+          .from('trabalho')
           .select()
           .eq('id', id)
           .eq('user_id', userId)
@@ -220,7 +220,7 @@ class TrabalhoRoutes {
       _logger.info('Deletando trabalho: $id');
 
       await SupabaseService.client
-          .from('trabalhos')
+          .from('trabalho')
           .delete()
           .eq('id', id)
           .eq('user_id', userId);
@@ -259,7 +259,7 @@ class TrabalhoRoutes {
       _logger.info('Buscando trabalho por período: $dataInicio - $dataFim');
 
       final response = await SupabaseService.client
-          .from('trabalhos')
+          .from('trabalho')
           .select()
           .eq('user_id', userId)
           .gte('data', dataInicio)

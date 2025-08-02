@@ -31,8 +31,8 @@ class ManutencaoModel {
       'data_registro': dataRegistro.toIso8601String(),
     };
     
-    if (id != null) map['id'] = id;
-    if (userId != null) map['user_id'] = userId;
+    if (id != null) map['id'] = id!;
+    if (userId != null) map['user_id'] = userId!;
     if (updatedAt != null) map['updated_at'] = updatedAt!.toIso8601String();
     
     return map;
