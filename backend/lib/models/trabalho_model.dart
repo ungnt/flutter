@@ -1,5 +1,7 @@
+/// Model para registros de trabalho diário
+/// Alinhado 100% com frontend e Supabase
 class TrabalhoModel {
-  final String? id;
+  final String? id; // UUID String para compatibilidade total com Supabase
   final String userId;
   final DateTime data;
   final double ganhos;

@@ -56,7 +56,7 @@ class BackendConfig {
     baseUrl: 'https://moto.fly.dev',
     protocol: 'https',
     host: 'moto.fly.dev',
-    port: 443,
+    port: 5000,
     apiPath: '/api',
     timeoutSeconds: 30,
     useHttps: true,

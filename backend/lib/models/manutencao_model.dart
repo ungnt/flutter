@@ -1,5 +1,7 @@
+/// Model para manutenções do veículo
+/// Alinhado 100% com frontend e Supabase
 class ManutencaoModel {
-  final String? id;
+  final String? id; // UUID String para compatibilidade total com Supabase
   final String userId;
   final DateTime data;
   final String tipo;

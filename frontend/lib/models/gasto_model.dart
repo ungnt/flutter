@@ -1,6 +1,8 @@
+/// Model para gastos/despesas do usuário
+/// Alinhado 100% com backend e Supabase
 class GastoModel {
-  final String? id; // UUID para compatibilidade Supabase
-  final String? userId; // user_id para sincronização
+  final String? id; // UUID String para compatibilidade total com Supabase
+  final String? userId; // user_id String para sincronização
   final DateTime data;
   final String categoria;
   final double valor;

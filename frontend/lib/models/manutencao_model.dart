@@ -1,6 +1,8 @@
+/// Model para manutenções do veículo
+/// Alinhado 100% com backend e Supabase
 class ManutencaoModel {
-  final String? id;  // Corrigido: UUID no Supabase
-  final String? userId;  // Adicionado: user_id para sincronização
+  final String? id; // UUID String para compatibilidade total com Supabase
+  final String? userId; // user_id String para sincronização
   final DateTime data;
   final String tipo;
   final double valor;

@@ -1,5 +1,7 @@
+/// Model para usuários do sistema
+/// Alinhado 100% com frontend e Supabase
 class UserModel {
-  final String id;
+  final String id; // UUID String obrigatório do Supabase
   final String email;
   final String name;
   final bool isPremium;
