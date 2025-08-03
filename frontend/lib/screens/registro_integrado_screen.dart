@@ -104,7 +104,7 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
   }
 
   Future<void> _loadManutencoes() async {
-    _manutencao = await _db.getManutencao();
+    _manutencao = await _db.getManutencoes();
   }
 
   Future<void> _saveRegistroCompleto() async {
