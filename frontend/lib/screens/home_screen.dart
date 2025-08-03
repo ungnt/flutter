@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/database_service.dart';
+import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
 import '../widgets/animated_counter.dart';
@@ -23,11 +24,24 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, double> dadosMes = {};
   List<Map<String, dynamic>> ultimosRegistros = [];
   bool isLoading = true;
+  bool isAuthenticated = false;
+  String? userEmail;
 
   @override
   void initState() {
     super.initState();
+    _checkAuthenticationStatus();
     _loadDashboardData();
+  }
+
+  Future<void> _checkAuthenticationStatus() async {
+    final authenticated = await AuthService.isAuthenticated();
+    final email = await AuthService.getUserEmail();
+    
+    setState(() {
+      isAuthenticated = authenticated;
+      userEmail = email;
+    });
   }
 
   Future<void> _loadDashboardData() async {
@@ -132,6 +146,58 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         centerTitle: true,
         actions: [
+          if (isAuthenticated) ...[
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.account_circle),
+              onSelected: (value) {
+                if (value == 'logout') {
+                  _handleLogout();
+                } else if (value == 'sync') {
+                  _navigateToSync();
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'user',
+                  enabled: false,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Logado como:', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      Text(userEmail ?? 'Usuário', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+                const PopupMenuDivider(),
+                const PopupMenuItem(
+                  value: 'sync',
+                  child: Row(
+                    children: [
+                      Icon(Icons.sync, size: 20),
+                      SizedBox(width: 8),
+                      Text('Sincronizar'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout, size: 20, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Sair', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            IconButton(
+              icon: const Icon(Icons.login),
+              onPressed: _navigateToLogin,
+              tooltip: 'Fazer Login',
+            ),
+          ],
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadDashboardData,
@@ -148,6 +214,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _buildAuthenticationStatus(),
+                    const SizedBox(height: 16),
                     _buildDashboardCards(),
                     const SizedBox(height: 24),
                     _buildNavigationButtons(),
@@ -347,5 +415,106 @@ class _HomeScreenState extends State<HomeScreen> {
           )),
       ],
     );
+  }
+
+  Widget _buildAuthenticationStatus() {
+    return ModernCard(
+      backgroundColor: isAuthenticated 
+        ? AppTheme.successColor.withOpacity(0.05)
+        : AppTheme.warningColor.withOpacity(0.05),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isAuthenticated 
+                ? AppTheme.successColor.withOpacity(0.1)
+                : AppTheme.warningColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              isAuthenticated ? Icons.cloud_done : Icons.cloud_off,
+              color: isAuthenticated ? AppTheme.successColor : AppTheme.warningColor,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isAuthenticated ? 'Online' : 'Modo Offline',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isAuthenticated ? AppTheme.successColor : AppTheme.warningColor,
+                  ),
+                ),
+                if (isAuthenticated && userEmail != null) 
+                  Text(
+                    userEmail!,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  )
+                else if (!isAuthenticated)
+                  const Text(
+                    'Dados salvos apenas localmente',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+              ],
+            ),
+          ),
+          if (!isAuthenticated)
+            TextButton(
+              onPressed: _navigateToLogin,
+              child: const Text('Entrar'),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleLogout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar Logout'),
+        content: const Text('Tem certeza que deseja sair?\n\nVocê continuará no modo offline até fazer login novamente.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Sair'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await AuthService.logout();
+      await _checkAuthenticationStatus();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Logout realizado com sucesso!'),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
+    }
+  }
+
+  void _navigateToLogin() {
+    Navigator.pushNamed(context, '/login').then((_) {
+      _checkAuthenticationStatus();
+    });
+  }
+
+  void _navigateToSync() {
+    Navigator.pushNamed(context, '/sync');
   }
 }

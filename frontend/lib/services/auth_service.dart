@@ -61,6 +61,23 @@ class AuthService {
     return token != null && token.isNotEmpty;
   }
 
+  /// Fazer logout (limpar dados)
+  static Future<void> logout() async {
+    await clearToken();
+  }
+
+  /// Obter email do usuário logado
+  static Future<String?> getUserEmail() async {
+    final userData = await getUserData();
+    return userData?['email'];
+  }
+
+  /// Obter nome do usuário logado
+  static Future<String?> getUserName() async {
+    final userData = await getUserData();
+    return userData?['name'];
+  }
+
   /// Obter dados do usuário armazenados
   static Future<Map<String, dynamic>?> getUserData() async {
     final prefs = await SharedPreferences.getInstance();

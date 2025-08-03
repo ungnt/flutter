@@ -316,7 +316,7 @@ class BackupRoutes {
     try {
       // Usar o AuthService para validar token
       // Usar o método correto do AuthService
-      final authService = AuthService(SupabaseService(), 'jwt_secret_key');
+      final authService = AuthService(SupabaseService.instance, 'jwt_secret_key');
       final payload = authService.validateJWT(token);
       return payload?['user_id'];
     } catch (e) {

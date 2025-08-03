@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:motouber/screens/register_screen.dart';
 import 'package:motouber/services/api_service.dart';
+import 'package:motouber/services/auth_service.dart';
 import 'package:motouber/theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -16,6 +17,19 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfAlreadyAuthenticated();
+  }
+
+  Future<void> _checkIfAlreadyAuthenticated() async {
+    final isAuth = await AuthService.isAuthenticated();
+    if (isAuth && mounted) {
+      Navigator.of(context).pushReplacementNamed('/home');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
