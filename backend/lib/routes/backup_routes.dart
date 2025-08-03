@@ -85,7 +85,7 @@ class BackupRoutes {
               'trabalhos': trabalhos.length,
               'gastos': gastos.length,
               'manutencao': manutencao.length,
-              'configuracoes': configuracoes.length
+              'configuracoes': 0
             },
             'totalRecords': totalRecords,
             'size': '${estimatedSize}KB',
@@ -315,7 +315,10 @@ class BackupRoutes {
     
     try {
       // Usar o AuthService para validar token
-      return await AuthService.validateToken(token);
+      // Usar o método correto do AuthService
+      final authService = AuthService(SupabaseService(), 'jwt_secret_key');
+      final payload = authService.validateJWT(token);
+      return payload?['user_id'];
     } catch (e) {
       print('Erro ao validar token: $e');
       return null;
@@ -327,12 +330,12 @@ class BackupRoutes {
     try {
       for (final trabalhoData in trabalhos) {
         final trabalho = TrabalhoModel.fromJson(trabalhoData);
-        trabalho.userId = userId;
+        final trabalhoWithUser = trabalho.copyWith(userId: userId);
         
         // Insert ou update no Supabase
         await SupabaseService.client
             .from('trabalho')
-            .upsert(trabalho.toJson());
+            .upsert(trabalhoWithUser.toJson());
       }
     } catch (e) {
       print('Erro ao salvar trabalhos: $e');
@@ -344,11 +347,11 @@ class BackupRoutes {
     try {
       for (final gastoData in gastos) {
         final gasto = GastoModel.fromJson(gastoData);
-        gasto.userId = userId;
+        final gastoWithUser = gasto.copyWith(userId: userId);
         
         await SupabaseService.client
             .from('gastos')
-            .upsert(gasto.toJson());
+            .upsert(gastoWithUser.toJson());
       }
     } catch (e) {
       print('Erro ao salvar gastos: $e');
@@ -360,11 +363,11 @@ class BackupRoutes {
     try {
       for (final manutencaoData in manutencao) {
         final manutencaoObj = ManutencaoModel.fromJson(manutencaoData);
-        manutencaoObj.userId = userId;
+        final manutencaoWithUser = manutencaoObj.copyWith(userId: userId);
         
         await SupabaseService.client
             .from('manutencoes')
-            .upsert(manutencaoObj.toJson());
+            .upsert(manutencaoWithUser.toJson());
       }
     } catch (e) {
       print('Erro ao salvar manutenções: $e');
