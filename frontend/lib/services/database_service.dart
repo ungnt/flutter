@@ -93,7 +93,7 @@ class DatabaseService {
       // Remover campo combustível da tabela trabalho se existir
       await db.execute('DROP TABLE IF EXISTS trabalho_old');
       await db.execute('ALTER TABLE trabalho RENAME TO trabalho_old');
-      
+
       await db.execute('''
         CREATE TABLE trabalho (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -105,12 +105,12 @@ class DatabaseService {
           data_registro TEXT NOT NULL
         )
       ''');
-      
+
       await db.execute('''
         INSERT INTO trabalho (id, data, ganhos, km, horas, observacoes, data_registro)
         SELECT id, data, ganhos, km, horas, observacoes, data_registro FROM trabalho_old
       ''');
-      
+
       await db.execute('DROP TABLE trabalho_old');
     }
 
@@ -205,7 +205,7 @@ class DatabaseService {
   // Método específico para buscar trabalhos por período (usado pelo GoalsService)
   Future<List<TrabalhoModel>> getTrabalhosByPeriod(DateTime startDate, DateTime endDate) async {
     final db = await database;
-    
+
     final List<Map<String, dynamic>> maps = await db.query(
       'trabalho',
       where: 'DATE(data) BETWEEN ? AND ?',
@@ -267,7 +267,7 @@ class DatabaseService {
   // Método específico para buscar gastos por período (usado pelo GoalsService)
   Future<List<GastoModel>> getGastosByPeriod(DateTime startDate, DateTime endDate) async {
     final db = await database;
-    
+
     final List<Map<String, dynamic>> maps = await db.query(
       'gastos',
       where: 'DATE(data) BETWEEN ? AND ?',
@@ -285,6 +285,16 @@ class DatabaseService {
   Future<int> insertManutencao(ManutencaoModel manutencao) async {
     final db = await database;
     return await db.insert('manutencao', manutencao.toMap());
+  }
+
+  /// Insert ou Update manutenção (para sincronização)
+  Future<int> insertOrUpdateManutencao(ManutencaoModel manutencao) async {
+    final db = await database;
+    return await db.insertWithOnConflict(
+      'manutencao',
+      manutencao.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   Future<List<ManutencaoModel>> getManutencoes({DateTime? dataInicio, DateTime? dataFim}) async {
@@ -417,7 +427,7 @@ class DatabaseService {
       where: 'tipo = ?',
       whereArgs: [tipo],
     );
-    
+
     if (maps.isNotEmpty) {
       return maps.first['intervalo_km'] as int;
     }
@@ -491,7 +501,7 @@ class DatabaseService {
   Future<Map<String, int>> getAllIntervalosManutencao() async {
     final db = await database;
     final maps = await db.query('intervalos_manutencao');
-    
+
     Map<String, int> intervalos = {};
     for (var map in maps) {
       intervalos[map['tipo'] as String] = map['intervalo_km'] as int;
@@ -508,20 +518,20 @@ class DatabaseService {
     });
   }
 
-  
+
 
   Future<List<ManutencaoModel>> getManutencoesByPeriod(DateTime startDate, DateTime endDate) async {
     final db = await database;
     final startStr = startDate.toIso8601String().split('T')[0];
     final endStr = endDate.toIso8601String().split('T')[0];
-    
+
     final maps = await db.query(
       'manutencao',
       where: 'DATE(data) >= ? AND DATE(data) <= ?',
       whereArgs: [startStr, endStr],
       orderBy: 'data DESC',
     );
-    
+
     return maps.map((map) => ManutencaoModel.fromMap(map)).toList();
   }
 }

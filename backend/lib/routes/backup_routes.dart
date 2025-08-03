@@ -1,6 +1,11 @@
 import 'dart:convert';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
+import '../services/supabase_service.dart';
+import '../services/auth_service.dart';
+import '../models/trabalho_model.dart';
+import '../models/gasto_model.dart';
+import '../models/manutencao_model.dart';
 
 class BackupRoutes {
   Router get router {
@@ -41,17 +46,30 @@ class BackupRoutes {
         );
       }
       
-      // TODO: Implementar lógica de resolução de conflitos:
-      // 1. Comparar timestamps dos dados locais vs servidor
-      // 2. Identificar registros conflitantes
-      // 3. Aplicar estratégia de merge (last-write-wins ou manual)
-      // 4. Salvar dados mesclados no PostgreSQL
-      
-      // Simular processamento dos dados
+      // Processar dados reais do Flutter
       final trabalhos = backupData['trabalhos'] as List? ?? [];
       final gastos = backupData['gastos'] as List? ?? [];
       final manutencao = backupData['manutencao'] as List? ?? [];
-      final configuracoes = backupData['configuracoes'] as Map? ?? {};
+      
+      // Obter usuário do token
+      final token = request.headers['authorization']?.replaceFirst('Bearer ', '');
+      final userId = await _getUserFromToken(token);
+      
+      if (userId == null) {
+        return Response.unauthorized(
+          jsonEncode({'success': false, 'error': 'Token inválido'}),
+          headers: {'Content-Type': 'application/json'},
+        );
+      }
+
+      // Salvar trabalhos no Supabase
+      await _saveTrabalhos(trabalhos, userId);
+      
+      // Salvar gastos no Supabase
+      await _saveGastos(gastos, userId);
+      
+      // Salvar manutenções no Supabase
+      await _saveManutencao(manutencao, userId);
       
       final totalRecords = trabalhos.length + gastos.length + manutencao.length;
       final estimatedSize = (body.length / 1024).toStringAsFixed(1); // KB
@@ -100,49 +118,33 @@ class BackupRoutes {
     final deviceId = request.url.queryParameters['deviceId'];
     final lastSync = request.url.queryParameters['lastSync'];
     
+    // Obter usuário do token
+    final token = request.headers['authorization']?.replaceFirst('Bearer ', '');
+    final userId = await _getUserFromToken(token);
+    
+    if (userId == null) {
+      return Response.unauthorized(
+        jsonEncode({'success': false, 'error': 'Token inválido'}),
+        headers: {'Content-Type': 'application/json'},
+      );
+    }
+
+    // Buscar dados reais do Supabase
+    final trabalhos = await _getTrabalhos(userId);
+    final gastos = await _getGastos(userId);
+    final manutencao = await _getManutencao(userId);
+
     return Response.ok(
       jsonEncode({
         'success': true,
-        'message': 'Download backup - implementação com delta sync',
+        'message': 'Download backup - dados reais do Supabase',
         'data': {
-          'trabalhos': [
-            // TODO: Dados reais do PostgreSQL
-            {
-              'id': 1,
-              'data': '2025-01-21',
-              'ganhos': 150.00,
-              'horas': 8.5,
-              'km': 120,
-              'observacoes': 'Dia produtivo',
-              'createdAt': '2025-01-21T10:30:00Z',
-              'updatedAt': '2025-01-21T10:30:00Z',
-              'deviceId': 'device_001'
-            }
-          ],
-          'gastos': [
-            {
-              'id': 1,
-              'data': '2025-01-21',
-              'categoria': 'Combustível',
-              'valor': 45.00,
-              'descricao': 'Gasolina posto BR',
-              'createdAt': '2025-01-21T11:00:00Z',
-              'updatedAt': '2025-01-21T11:00:00Z',
-              'deviceId': 'device_001'
-            }
-          ],
-          'manutencao': [],
-          'configuracoes': {
-            'intervalos_manutencao': {
-              'oleo': 3000,
-              'filtro': 10000,
-              'pneus': 15000
-            }
-          },
+          'trabalhos': trabalhos,
+          'gastos': gastos,
+          'manutencao': manutencao,
           'metadata': {
             'lastSync': DateTime.now().toIso8601String(),
-            'totalRecords': 2,
-            'deltaSync': lastSync != null, // Se tem lastSync, só retorna mudanças
+            'totalRecords': trabalhos.length + gastos.length + manutencao.length,
             'deviceId': deviceId,
             'serverVersion': '1.0.0'
           }
@@ -304,6 +306,113 @@ class BackupRoutes {
         }),
         headers: {'Content-Type': 'application/json'},
       );
+    }
+  }
+
+  /// Obter userId do token JWT
+  Future<String?> _getUserFromToken(String? token) async {
+    if (token == null) return null;
+    
+    try {
+      // Usar o AuthService para validar token
+      return await AuthService.validateToken(token);
+    } catch (e) {
+      print('Erro ao validar token: $e');
+      return null;
+    }
+  }
+
+  /// Salvar trabalhos no Supabase
+  Future<void> _saveTrabalhos(List<dynamic> trabalhos, String userId) async {
+    try {
+      for (final trabalhoData in trabalhos) {
+        final trabalho = TrabalhoModel.fromJson(trabalhoData);
+        trabalho.userId = userId;
+        
+        // Insert ou update no Supabase
+        await SupabaseService.client
+            .from('trabalho')
+            .upsert(trabalho.toJson());
+      }
+    } catch (e) {
+      print('Erro ao salvar trabalhos: $e');
+    }
+  }
+
+  /// Salvar gastos no Supabase
+  Future<void> _saveGastos(List<dynamic> gastos, String userId) async {
+    try {
+      for (final gastoData in gastos) {
+        final gasto = GastoModel.fromJson(gastoData);
+        gasto.userId = userId;
+        
+        await SupabaseService.client
+            .from('gastos')
+            .upsert(gasto.toJson());
+      }
+    } catch (e) {
+      print('Erro ao salvar gastos: $e');
+    }
+  }
+
+  /// Salvar manutenções no Supabase
+  Future<void> _saveManutencao(List<dynamic> manutencao, String userId) async {
+    try {
+      for (final manutencaoData in manutencao) {
+        final manutencaoObj = ManutencaoModel.fromJson(manutencaoData);
+        manutencaoObj.userId = userId;
+        
+        await SupabaseService.client
+            .from('manutencoes')
+            .upsert(manutencaoObj.toJson());
+      }
+    } catch (e) {
+      print('Erro ao salvar manutenções: $e');
+    }
+  }
+
+  /// Buscar trabalhos do Supabase
+  Future<List<Map<String, dynamic>>> _getTrabalhos(String userId) async {
+    try {
+      final response = await SupabaseService.client
+          .from('trabalho')
+          .select()
+          .eq('user_id', userId);
+      
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('Erro ao buscar trabalhos: $e');
+      return [];
+    }
+  }
+
+  /// Buscar gastos do Supabase
+  Future<List<Map<String, dynamic>>> _getGastos(String userId) async {
+    try {
+      final response = await SupabaseService.client
+          .from('gastos')
+          .select()
+          .eq('user_id', userId);
+      
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('Erro ao buscar gastos: $e');
+      return [];
+    }
+  }
+
+  /// Buscar manutenções do Supabase
+  Future<List<Map<String, dynamic>>> _getManutencao(String userId) async {
+    try {
+      final response = await SupabaseService.client
+          .from('manutencoes')
+          .select()
+          .eq('user_id', userId);
+      
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('Erro ao buscar manutenções: $e');
+      return [];
     }
   }
 }

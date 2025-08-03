@@ -42,11 +42,11 @@ class SyncService {
     return await syncAll();
   }
   
-  /// Sincronização básica - apenas verifica conectividade
+  /// Sincronização completa - upload e download de dados reais
   static Future<SyncResult> syncAll() async {
     final service = SyncService.instance;
     try {
-      print('$_tag Iniciando sincronização...');
+      print('$_tag Iniciando sincronização completa...');
       service._isSyncing = true;
       service._syncStatus = SyncStatus.syncing;
       service._syncProgress = 0.0;
@@ -62,34 +62,26 @@ class SyncService {
         );
       }
 
+      service._syncProgress = 0.1;
+
+      // 1. UPLOAD - Enviar dados locais para servidor
+      await _uploadLocalData(token);
       service._syncProgress = 0.5;
 
-      // Verificar conectividade
-      final response = await http.get(
-        Uri.parse('$baseUrl/health'),
-        headers: {'Authorization': 'Bearer $token'},
-      ).timeout(BackendConfigService.instance.getTimeout());
-
+      // 2. DOWNLOAD - Baixar dados do servidor
+      final downloadResult = await _downloadServerData(token);
       service._syncProgress = 1.0;
 
-      if (response.statusCode == 200) {
-        print('$_tag Servidor conectado');
-        service._isSyncing = false;
-        service._syncStatus = SyncStatus.success;
-        service._lastSyncTime = DateTime.now();
-        return SyncResult(
-          success: true,
-          message: 'Sincronização realizada com sucesso',
-          synced: 0,
-        );
-      } else {
-        service._isSyncing = false;
-        service._syncStatus = SyncStatus.error;
-        return SyncResult(
-          success: false,
-          message: 'Erro na conexão com servidor',
-        );
-      }
+      service._isSyncing = false;
+      service._syncStatus = SyncStatus.success;
+      service._lastSyncTime = DateTime.now();
+
+      return SyncResult(
+        success: true,
+        message: 'Sincronização completa realizada com sucesso',
+        synced: downloadResult,
+      );
+
     } catch (e) {
       print('$_tag Erro na sincronização: $e');
       service._isSyncing = false;
@@ -98,6 +90,116 @@ class SyncService {
         success: false,
         message: 'Erro na sincronização: $e',
       );
+    }
+  }
+
+  /// Upload dados locais para servidor
+  static Future<void> _uploadLocalData(String token) async {
+    try {
+      print('$_tag Enviando dados locais para servidor...');
+      
+      // Obter dados locais do SQLite
+      final db = DatabaseService.instance;
+      final trabalhos = await db.getAllTrabalhos();
+      final gastos = await db.getAllGastos();
+      final manutencoes = await db.getAllManutencao();
+
+      final localData = {
+        'dados': {
+          'trabalhos': trabalhos.map((t) => t.toJson()).toList(),
+          'gastos': gastos.map((g) => g.toJson()).toList(),
+          'manutencao': manutencoes.map((m) => m.toJson()).toList(),
+        },
+        'deviceId': 'flutter_app',
+        'lastSync': DateTime.now().toIso8601String(),
+      };
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/backup/upload'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(localData),
+      ).timeout(BackendConfigService.instance.getTimeout());
+
+      if (response.statusCode == 200) {
+        print('$_tag Upload realizado com sucesso');
+      } else {
+        print('$_tag Erro no upload: ${response.statusCode}');
+      }
+
+    } catch (e) {
+      print('$_tag Erro no upload: $e');
+    }
+  }
+
+  /// Download dados do servidor
+  static Future<int> _downloadServerData(String token) async {
+    try {
+      print('$_tag Baixando dados do servidor...');
+      
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/backup/download?deviceId=flutter_app'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(BackendConfigService.instance.getTimeout());
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final serverData = data['data'] as Map<String, dynamic>;
+        
+        // Salvar dados no SQLite local
+        await _saveServerDataLocally(serverData);
+        
+        final totalRecords = (serverData['trabalhos'] as List? ?? []).length +
+                            (serverData['gastos'] as List? ?? []).length +
+                            (serverData['manutencao'] as List? ?? []).length;
+        
+        print('$_tag Download realizado: $totalRecords registros');
+        return totalRecords;
+      } else {
+        print('$_tag Erro no download: ${response.statusCode}');
+        return 0;
+      }
+
+    } catch (e) {
+      print('$_tag Erro no download: $e');
+      return 0;
+    }
+  }
+
+  /// Salvar dados do servidor no SQLite local
+  static Future<void> _saveServerDataLocally(Map<String, dynamic> serverData) async {
+    try {
+      final db = DatabaseService.instance;
+
+      // Salvar trabalhos
+      final trabalhos = serverData['trabalhos'] as List? ?? [];
+      for (final trabalhoData in trabalhos) {
+        final trabalho = TrabalhoModel.fromJson(trabalhoData);
+        await db.insertOrUpdateTrabalho(trabalho);
+      }
+
+      // Salvar gastos
+      final gastos = serverData['gastos'] as List? ?? [];
+      for (final gastoData in gastos) {
+        final gasto = GastoModel.fromJson(gastoData);
+        await db.insertOrUpdateGasto(gasto);
+      }
+
+      // Salvar manutenções
+      final manutencao = serverData['manutencao'] as List? ?? [];
+      for (final manutencaoData in manutencao) {
+        final manutencaoObj = ManutencaoModel.fromJson(manutencaoData);
+        await db.insertOrUpdateManutencao(manutencaoObj);
+      }
+
+      print('$_tag Dados salvos localmente com sucesso');
+
+    } catch (e) {
+      print('$_tag Erro ao salvar dados localmente: $e');
     }
   }
 
