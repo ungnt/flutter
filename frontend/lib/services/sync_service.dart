@@ -1,17 +1,14 @@
 
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
-
-
-
-
+import 'backend_config_service.dart';
 import 'auth_service.dart';
 
 /// Serviço de sincronização simplificado
 class SyncService {
   static const String _tag = '[SyncService]';
-  static const String baseUrl = 'http://localhost:8080';
+  // URL dinâmica baseada na configuração atual
+  static String get baseUrl => BackendConfigService.instance.getBaseUrl();
   
   // Estado de sincronização (singleton básico)
   static SyncService? _instance;
@@ -71,7 +68,7 @@ class SyncService {
       final response = await http.get(
         Uri.parse('$baseUrl/health'),
         headers: {'Authorization': 'Bearer $token'},
-      ).timeout(Duration(seconds: 5));
+      ).timeout(BackendConfigService.instance.getTimeout());
 
       service._syncProgress = 1.0;
 

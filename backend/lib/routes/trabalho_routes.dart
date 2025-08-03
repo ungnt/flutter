@@ -28,6 +28,9 @@ class TrabalhoRoutes {
     
     // GET /api/trabalho/periodo - Trabalhos por período
     router.get('/periodo', _getTrabalhosPorPeriodo);
+    
+    // POST /api/trabalho/sync - Sincronização de trabalhos
+    router.post('/sync', _syncTrabalhos);
 
     return router;
   }
@@ -278,6 +281,103 @@ class TrabalhoRoutes {
       );
     } catch (e, stackTrace) {
       _logger.severe('Erro ao buscar trabalho por período: $e', e, stackTrace);
+      return Response.internalServerError(
+        body: json.encode({'error': 'Erro interno do servidor'}),
+      );
+    }
+  }
+
+  /// POST /api/trabalho/sync - Sincronização de trabalhos
+  static Future<Response> _syncTrabalhos(Request request) async {
+    try {
+      final userId = AuthMiddleware.getUserId(request);
+      if (userId == null) {
+        return Response(401, body: json.encode({'error': 'Token inválido'}));
+      }
+
+      final body = await request.readAsString();
+      final data = json.decode(body) as Map<String, dynamic>;
+      final trabalhos = data['trabalhos'] as List? ?? [];
+
+      _logger.info('Sincronizando ${trabalhos.length} trabalhos para usuário: $userId');
+
+      List<Map<String, dynamic>> resultados = [];
+      int criados = 0;
+      int atualizados = 0;
+      List<String> erros = [];
+
+      for (final trabalhoData in trabalhos) {
+        try {
+          final trabalho = TrabalhoModel.fromJson(trabalhoData as Map<String, dynamic>);
+          
+          // Verificar se já existe
+          final existing = await SupabaseService.client
+              .from('trabalho')
+              .select()
+              .eq('user_id', userId)
+              .eq('data', trabalho.data.toIso8601String().split('T')[0])
+              .eq('ganhos', trabalho.ganhos)
+              .eq('km', trabalho.km)
+              .eq('horas', trabalho.horas)
+              .maybeSingle();
+
+          if (existing == null) {
+            // Criar novo
+            final trabalhoComUserId = trabalho.copyWith(userId: userId);
+            final response = await SupabaseService.client
+                .from('trabalho')
+                .insert(trabalhoComUserId.toJson())
+                .select()
+                .single();
+
+            resultados.add(TrabalhoModel.fromJson(response).toJson());
+            criados++;
+          } else {
+            // Atualizar existente
+            final updateData = {
+              'ganhos': trabalho.ganhos,
+              'km': trabalho.km,
+              'horas': trabalho.horas,
+              'observacoes': trabalho.observacoes,
+              'updated_at': DateTime.now().toIso8601String(),
+            };
+
+            final response = await SupabaseService.client
+                .from('trabalho')
+                .update(updateData)
+                .eq('id', existing['id'])
+                .select()
+                .single();
+
+            resultados.add(TrabalhoModel.fromJson(response).toJson());
+            atualizados++;
+          }
+        } catch (e) {
+          erros.add('Erro ao processar trabalho: $e');
+        }
+      }
+
+      _logger.info('Sincronização concluída: $criados criados, $atualizados atualizados, ${erros.length} erros');
+
+      return Response.ok(
+        json.encode({
+          'success': true,
+          'message': 'Sincronização concluída',
+          'data': {
+            'trabalhos': resultados,
+            'statistics': {
+              'criados': criados,
+              'atualizados': atualizados,
+              'erros': erros.length,
+              'total': trabalhos.length,
+            },
+            'erros': erros,
+          }
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
+    } catch (e, stackTrace) {
+      _logger.severe('Erro na sincronização de trabalhos: $e', e, stackTrace);
       return Response.internalServerError(
         body: json.encode({'error': 'Erro interno do servidor'}),
       );

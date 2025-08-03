@@ -30,6 +30,9 @@ class ManutencaoRoutes {
     
     // GET /api/manutencao/tipos - Manutenções agrupadas por tipo
     router.get('/tipos', _getManutencoesPorTipo);
+    
+    // POST /api/manutencao/sync - Sincronização de manutenções
+    router.post('/sync', _syncManutencoes);
 
     return router;
   }
@@ -330,6 +333,103 @@ class ManutencaoRoutes {
       );
     } catch (e, stackTrace) {
       _logger.severe('Erro ao buscar manutenções por tipo: $e', e, stackTrace);
+      return Response.internalServerError(
+        body: json.encode({'error': 'Erro interno do servidor'}),
+      );
+    }
+  }
+
+  /// POST /api/manutencao/sync - Sincronização de manutenções
+  static Future<Response> _syncManutencoes(Request request) async {
+    try {
+      final userId = AuthMiddleware.getUserId(request);
+      if (userId == null) {
+        return Response(401, body: json.encode({'error': 'Token inválido'}));
+      }
+
+      final body = await request.readAsString();
+      final data = json.decode(body) as Map<String, dynamic>;
+      final manutencoes = data['manutencao'] as List? ?? [];
+
+      _logger.info('Sincronizando ${manutencoes.length} manutenções para usuário: $userId');
+
+      List<Map<String, dynamic>> resultados = [];
+      int criados = 0;
+      int atualizados = 0;
+      List<String> erros = [];
+
+      for (final manutencaoData in manutencoes) {
+        try {
+          final manutencao = ManutencaoModel.fromJson(manutencaoData as Map<String, dynamic>);
+          
+          // Verificar se já existe
+          final existing = await SupabaseService.client
+              .from('manutencao')
+              .select()
+              .eq('user_id', userId)
+              .eq('data', manutencao.data.toIso8601String().split('T')[0])
+              .eq('tipo', manutencao.tipo)
+              .eq('valor', manutencao.valor)
+              .eq('km_atual', manutencao.kmAtual)
+              .maybeSingle();
+
+          if (existing == null) {
+            // Criar novo
+            final manutencaoComUserId = manutencao.copyWith(userId: userId);
+            final response = await SupabaseService.client
+                .from('manutencao')
+                .insert(manutencaoComUserId.toJson())
+                .select()
+                .single();
+
+            resultados.add(ManutencaoModel.fromJson(response).toJson());
+            criados++;
+          } else {
+            // Atualizar existente
+            final updateData = {
+              'tipo': manutencao.tipo,
+              'valor': manutencao.valor,
+              'km_atual': manutencao.kmAtual,
+              'descricao': manutencao.descricao,
+              'updated_at': DateTime.now().toIso8601String(),
+            };
+
+            final response = await SupabaseService.client
+                .from('manutencao')
+                .update(updateData)
+                .eq('id', existing['id'])
+                .select()
+                .single();
+
+            resultados.add(ManutencaoModel.fromJson(response).toJson());
+            atualizados++;
+          }
+        } catch (e) {
+          erros.add('Erro ao processar manutenção: $e');
+        }
+      }
+
+      _logger.info('Sincronização concluída: $criados criados, $atualizados atualizados, ${erros.length} erros');
+
+      return Response.ok(
+        json.encode({
+          'success': true,
+          'message': 'Sincronização concluída',
+          'data': {
+            'manutencoes': resultados,
+            'statistics': {
+              'criados': criados,
+              'atualizados': atualizados,
+              'erros': erros.length,
+              'total': manutencoes.length,
+            },
+            'erros': erros,
+          }
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
+    } catch (e, stackTrace) {
+      _logger.severe('Erro na sincronização de manutenções: $e', e, stackTrace);
       return Response.internalServerError(
         body: json.encode({'error': 'Erro interno do servidor'}),
       );

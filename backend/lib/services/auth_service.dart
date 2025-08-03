@@ -26,7 +26,7 @@ class AuthService {
   }
 
   /// Gerar JWT token
-  String _generateJWT(User user) {
+  String _generateJWT(UserModel user) {
     final jwt = JWT({
       'user_id': user.id,
       'email': user.email,
@@ -149,7 +149,7 @@ class AuthService {
   }
 
   /// Buscar usuário por ID do token
-  Future<User?> getUserFromToken(String token) async {
+  Future<UserModel?> getUserFromToken(String token) async {
     try {
       final payload = validateJWT(token);
       if (payload == null) return null;

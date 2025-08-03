@@ -1,6 +1,6 @@
 import 'package:supabase/supabase.dart';
 import 'package:logging/logging.dart';
-import '../models/user_model.dart' as UserModel;
+import '../models/user_model.dart';
 
 class SupabaseService {
   static final _logger = Logger('SupabaseService');
@@ -86,7 +86,7 @@ class SupabaseService {
   }
 
   /// Criar novo usuário
-  Future<UserModel.User?> createUser({
+  Future<UserModel?> createUser({
     required String email,
     required String name,
     required String hashedPassword,
@@ -102,7 +102,7 @@ class SupabaseService {
           .select()
           .single();
 
-      return UserModel.User.fromJson(response);
+      return UserModel.fromJson(response);
       
     } catch (e) {
       _logger.severe('Erro ao criar usuário: $e');
@@ -111,7 +111,7 @@ class SupabaseService {
   }
 
   /// Buscar usuário por email
-  Future<UserModel.User?> getUserByEmail(String email) async {
+  Future<UserModel?> getUserByEmail(String email) async {
     try {
       final response = await _client
           .from('users')
@@ -120,7 +120,7 @@ class SupabaseService {
           .maybeSingle();
 
       if (response == null) return null;
-      return UserModel.User.fromJson(response);
+      return UserModel.fromJson(response);
       
     } catch (e) {
       _logger.warning('Erro ao buscar usuário por email: $e');
@@ -129,7 +129,7 @@ class SupabaseService {
   }
 
   /// Buscar usuário por ID
-  Future<UserModel.User?> getUserById(String id) async {
+  Future<UserModel?> getUserById(String id) async {
     try {
       final response = await _client
           .from('users')
@@ -138,7 +138,7 @@ class SupabaseService {
           .maybeSingle();
 
       if (response == null) return null;
-      return UserModel.User.fromJson(response);
+      return UserModel.fromJson(response);
       
     } catch (e) {
       _logger.warning('Erro ao buscar usuário por ID: $e');

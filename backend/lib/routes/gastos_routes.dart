@@ -30,6 +30,9 @@ class GastosRoutes {
     
     // GET /api/gastos/categorias - Gastos agrupados por categoria
     router.get('/categorias', _getGastosPorCategoria);
+    
+    // POST /api/gastos/sync - Sincronização de gastos
+    router.post('/sync', _syncGastos);
 
     return router;
   }
@@ -326,6 +329,101 @@ class GastosRoutes {
       );
     } catch (e, stackTrace) {
       _logger.severe('Erro ao buscar gastos por categoria: $e', e, stackTrace);
+      return Response.internalServerError(
+        body: json.encode({'error': 'Erro interno do servidor'}),
+      );
+    }
+  }
+
+  /// POST /api/gastos/sync - Sincronização de gastos
+  static Future<Response> _syncGastos(Request request) async {
+    try {
+      final userId = AuthMiddleware.getUserId(request);
+      if (userId == null) {
+        return Response(401, body: json.encode({'error': 'Token inválido'}));
+      }
+
+      final body = await request.readAsString();
+      final data = json.decode(body) as Map<String, dynamic>;
+      final gastos = data['gastos'] as List? ?? [];
+
+      _logger.info('Sincronizando ${gastos.length} gastos para usuário: $userId');
+
+      List<Map<String, dynamic>> resultados = [];
+      int criados = 0;
+      int atualizados = 0;
+      List<String> erros = [];
+
+      for (final gastoData in gastos) {
+        try {
+          final gasto = GastoModel.fromJson(gastoData as Map<String, dynamic>);
+          
+          // Verificar se já existe
+          final existing = await SupabaseService.client
+              .from('gastos')
+              .select()
+              .eq('user_id', userId)
+              .eq('data', gasto.data.toIso8601String().split('T')[0])
+              .eq('categoria', gasto.categoria)
+              .eq('valor', gasto.valor)
+              .maybeSingle();
+
+          if (existing == null) {
+            // Criar novo
+            final gastoComUserId = gasto.copyWith(userId: userId);
+            final response = await SupabaseService.client
+                .from('gastos')
+                .insert(gastoComUserId.toJson())
+                .select()
+                .single();
+
+            resultados.add(GastoModel.fromJson(response).toJson());
+            criados++;
+          } else {
+            // Atualizar existente
+            final updateData = {
+              'categoria': gasto.categoria,
+              'valor': gasto.valor,
+              'descricao': gasto.descricao,
+              'updated_at': DateTime.now().toIso8601String(),
+            };
+
+            final response = await SupabaseService.client
+                .from('gastos')
+                .update(updateData)
+                .eq('id', existing['id'])
+                .select()
+                .single();
+
+            resultados.add(GastoModel.fromJson(response).toJson());
+            atualizados++;
+          }
+        } catch (e) {
+          erros.add('Erro ao processar gasto: $e');
+        }
+      }
+
+      _logger.info('Sincronização concluída: $criados criados, $atualizados atualizados, ${erros.length} erros');
+
+      return Response.ok(
+        json.encode({
+          'success': true,
+          'message': 'Sincronização concluída',
+          'data': {
+            'gastos': resultados,
+            'statistics': {
+              'criados': criados,
+              'atualizados': atualizados,
+              'erros': erros.length,
+              'total': gastos.length,
+            },
+            'erros': erros,
+          }
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
+    } catch (e, stackTrace) {
+      _logger.severe('Erro na sincronização de gastos: $e', e, stackTrace);
       return Response.internalServerError(
         body: json.encode({'error': 'Erro interno do servidor'}),
       );
