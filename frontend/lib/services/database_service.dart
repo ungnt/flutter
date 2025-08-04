@@ -297,6 +297,26 @@ class DatabaseService {
     );
   }
 
+  /// Insert ou Update gasto (para sincronização)
+  Future<int> insertOrUpdateGasto(GastoModel gasto) async {
+    final db = await database;
+    return await db.insertWithOnConflict(
+      'gastos',
+      gasto.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Insert ou Update trabalho (para sincronização)
+  Future<int> insertOrUpdateTrabalho(TrabalhoModel trabalho) async {
+    final db = await database;
+    return await db.insertWithOnConflict(
+      'trabalho',
+      trabalho.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   Future<List<ManutencaoModel>> getManutencoes({DateTime? dataInicio, DateTime? dataFim}) async {
     final db = await database;
     String where = '';
