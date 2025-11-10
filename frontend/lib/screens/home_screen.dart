@@ -498,15 +498,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (confirmed == true) {
       await AuthService.logout();
-      await _checkAuthenticationStatus();
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Logout realizado com sucesso!'),
-            backgroundColor: AppTheme.successColor,
-          ),
-        );
+        Navigator.pushReplacementNamed(context, '/login');
       }
     }
   }
