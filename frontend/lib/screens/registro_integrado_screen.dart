@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../services/database_service.dart';
+import '../services/online_data_service.dart';
+import '../services/connectivity_service.dart';
 import '../models/trabalho_model.dart';
 import '../models/gasto_model.dart';
 import '../models/manutencao_model.dart';
@@ -16,6 +19,7 @@ class RegistroIntegradoScreen extends StatefulWidget {
 class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final DatabaseService _db = DatabaseService.instance;
+  final OnlineDataService _onlineService = OnlineDataService.instance;
   final _formKey = GlobalKey<FormState>();
   
   // Controladores para Trabalho
@@ -110,7 +114,7 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
   Future<void> _saveRegistroCompleto() async {
     if (_formKey.currentState!.validate()) {
       try {
-        // Salvar trabalho
+        // Salvar trabalho via online service
         final trabalho = TrabalhoModel(
           data: _selectedDate,
           ganhos: double.parse(_ganhosController.text),
@@ -119,7 +123,15 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
           observacoes: _observacoesController.text,
           dataRegistro: DateTime.now(),
         );
-        await _db.insertTrabalho(trabalho);
+        final trabalhoResult = await _onlineService.createTrabalho(trabalho);
+        
+        if (!trabalhoResult.success) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(trabalhoResult.message)),
+          );
+          return;
+        }
 
         // Salvar gasto se preenchido
         if (_showGastoForm && _valorGastoController.text.isNotEmpty) {
@@ -130,7 +142,15 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
             descricao: _descricaoGastoController.text,
             dataRegistro: DateTime.now(),
           );
-          await _db.insertGasto(gasto);
+          final gastoResult = await _onlineService.createGasto(gasto);
+          
+          if (!gastoResult.success) {
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(gastoResult.message)),
+            );
+            return;
+          }
         }
 
         // Salvar manutenção se preenchida
@@ -143,7 +163,15 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
             descricao: _descricaoManutencaoController.text,
             dataRegistro: DateTime.now(),
           );
-          await _db.insertManutencao(manutencao);
+          final manutencaoResult = await _onlineService.createManutencao(manutencao);
+          
+          if (!manutencaoResult.success) {
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(manutencaoResult.message)),
+            );
+            return;
+          }
         }
 
         _clearForm();

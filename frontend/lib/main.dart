@@ -13,6 +13,8 @@ import 'screens/backend_config_screen.dart';
 import 'services/database_service.dart';
 import 'services/theme_service.dart';
 import 'services/backend_config_service.dart';
+import 'services/connectivity_service.dart';
+import 'services/auth_service.dart';
 import 'theme/app_theme.dart';
 
 void main() async {
@@ -28,6 +30,9 @@ void main() async {
   final themeService = ThemeService();
   await themeService.init();
 
+  // Iniciar monitoramento de conectividade
+  ConnectivityService.instance.startMonitoring();
+
   runApp(MyApp(themeService: themeService));
 }
 
@@ -38,8 +43,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: themeService,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: themeService),
+        ChangeNotifierProvider.value(value: ConnectivityService.instance),
+      ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, child) {
           return MaterialApp(
@@ -86,6 +94,7 @@ class _InitialSetupCheckerState extends State<InitialSetupChecker> {
     // Aguardar um frame para garantir que o widget foi construído
     await Future.delayed(const Duration(milliseconds: 100));
     
+    // 1. Verificar se backend está configurado
     final isConfigured = await BackendConfigService.instance.isConfigured();
     
     if (!isConfigured) {
@@ -97,8 +106,23 @@ class _InitialSetupCheckerState extends State<InitialSetupChecker> {
           ),
         );
       }
+      return;
+    }
+    
+    // 2. Verificar se usuário está autenticado (login obrigatório)
+    final isAuthenticated = await AuthService.isAuthenticated();
+    
+    if (!isAuthenticated) {
+      // Não autenticado - redirecionar para login
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => LoginScreen(),
+          ),
+        );
+      }
     } else {
-      // App já configurado, ir para home
+      // Autenticado - ir para home
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(

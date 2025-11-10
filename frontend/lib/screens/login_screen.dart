@@ -210,18 +210,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
-                        
-                        const SizedBox(height: 16),
-                        
-                        // Modo offline
-                        TextButton.icon(
-                          onPressed: _handleOfflineMode,
-                          icon: const Icon(Icons.offline_bolt),
-                          label: const Text('Continuar offline'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.grey,
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -287,10 +275,6 @@ class _LoginScreenState extends State<LoginScreen> {
         content: Text('Funcionalidade será implementada em breve'),
       ),
     );
-  }
-
-  void _handleOfflineMode() {
-    Navigator.of(context).pushReplacementNamed('/home');
   }
 
   @override
