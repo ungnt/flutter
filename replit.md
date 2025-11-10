@@ -12,6 +12,7 @@
 
 6. **Backend roda aqui** - Backend Dart/Shelf executa no Replit para análise e testes com banco de dados
 
+7. **SUPABASE NÃO VAI SER USADO** - usar banco de dados no backend 
 
 
 
@@ -20,7 +21,7 @@
 
 
 
-KM$ (Motouber) - Aplicativo de Controle Financeiro
+KM$ (Motora) - Aplicativo de Controle Financeiro
 
 ## Visão Geral
 Aplicativo de controle financeiro desenvolvido em Flutter, voltado para motoristas de aplicativo e motociclistas. Oferece gestão completa de ganhos, gastos e manutenções do veículo, com funcionalidades de relatórios, metas, backup local/nuvem e sincronização multi-dispositivo.
@@ -60,18 +61,7 @@ Aplicativo de controle financeiro desenvolvido em Flutter, voltado para motorist
   - dart_jsonwebtoken: ^2.13.0 (autenticação JWT)
 
 ### Banco de Dados
-- **Local**: SQLite com tabelas:
-  - trabalhos (corridas/entregas)
-  - gastos (combustível, alimentação, manutenção, etc)
-  - manutencoes (óleo, pneus, freios, etc)
-  - categorias_gastos (personalizáveis)
-  - categorias_manutencao (personalizáveis)
-  - metas (objetivos diários/mensais)
-
-- **Nuvem**: Supabase PostgreSQL
-  - users (autenticação)
-  - sync_data (dados sincronizados)
-  - RLS (Row Level Security) habilitado
+-trabalhando... mas sera dentro do backend.
 
 ## Configuração e Execução
 
@@ -83,10 +73,7 @@ PORT=5000 dart run bin/server.dart
 ```
 
 ### Frontend
-```bash
-cd frontend
-flutter pub get
-flutter run
+`` vai ser compilado no codemagic isso o usuário vai fazer manual.
 ```
 
 ## Funcionalidades Principais
@@ -140,43 +127,4 @@ Interface moderna com estética jovem motociclista:
 - **Target**: Android APK
 - **Configuração**: `codemagic.yaml`
 
-## Mudanças Recentes
-
-### 2025-11-09
-- ✅ Criado arquivo `backend/pubspec.yaml` com todas as dependências necessárias
-- ✅ Instaladas dependências do backend Dart
-- ✅ Backend inicializado e rodando na porta 5000
-- ✅ Conexão com Supabase estabelecida
-- ✅ Servidor respondendo corretamente aos health checks
-
-## Variáveis de Ambiente Necessárias
-
-### Backend
-```env
-SUPABASE_URL=sua_url_supabase
-SUPABASE_ANON_KEY=sua_chave_anonima
-JWT_SECRET=seu_jwt_secret_seguro
-PORT=5000
-HOST=0.0.0.0
-```
-
-## Próximos Passos Potenciais
-- Implementar testes unitários e de integração
-- Adicionar notificações push
-- Implementar dark mode completo
-- Adicionar exportação de relatórios (PDF)
-- Implementar sistema de backup automático
-- Adicionar suporte para múltiplos veículos
-
-## Observações Técnicas
-- O projeto usa arquitetura offline-first, garantindo funcionalidade sem internet
-- O sync com nuvem é opcional e configurável pelo usuário
-- Todas as operações críticas são validadas antes de serem enviadas ao backend
-- Sistema de resolução de conflitos implementado para dados sincronizados
-- Backend configurável com URLs dinâmicas (Replit, localhost, Fly.io)
-
-## Preferências do Usuário
-- Foco em funcionalidade offline-first
-- Design jovem e moderno (tema "Grau 244")
-- Priorizar performance e experiência do usuário
-- Manter código organizado e bem documentado
+## 
