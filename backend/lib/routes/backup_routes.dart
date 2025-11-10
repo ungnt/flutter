@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
-import '../services/supabase_service.dart';
+import '../services/database_service.dart';
 import '../services/auth_service.dart';
 import '../models/trabalho_model.dart';
 import '../models/gasto_model.dart';

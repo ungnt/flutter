@@ -3,14 +3,14 @@ import 'package:crypto/crypto.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:logging/logging.dart';
 import '../models/user_model.dart';
-import 'supabase_service.dart';
+import 'database_service.dart';
 
 class AuthService {
   static final _logger = Logger('AuthService');
-  final SupabaseService _supabase;
+  final DatabaseService _database;
   final String _jwtSecret;
   
-  AuthService(this._supabase, this._jwtSecret);
+  AuthService(this._database, this._jwtSecret);
 
   /// Hash da senha com salt
   String _hashPassword(String password) {
@@ -66,7 +66,7 @@ class AuthService {
       _logger.info('Registrando usuário: ${request.email}');
       
       // Verificar se email já existe
-      final existingUser = await _supabase.getUserByEmail(request.email);
+      final existingUser = await _database.getUserByEmail(request.email);
       if (existingUser != null) {
         _logger.warning('Email já cadastrado: ${request.email}');
         return null;
@@ -76,7 +76,7 @@ class AuthService {
       final hashedPassword = _hashPassword(request.password);
       
       // Criar usuário no banco
-      final user = await _supabase.createUser(
+      final user = await _database.createUser(
         email: request.email,
         name: request.name,
         hashedPassword: hashedPassword,
@@ -111,14 +111,14 @@ class AuthService {
       _logger.info('Login attempt: ${request.email}');
       
       // Buscar usuário por email
-      final user = await _supabase.getUserByEmail(request.email);
+      final user = await _database.getUserByEmail(request.email);
       if (user == null) {
         _logger.warning('Usuário não encontrado: ${request.email}');
         return null;
       }
       
       // Buscar senha hasheada
-      final storedPassword = await _supabase.getUserPassword(user.id);
+      final storedPassword = await _database.getUserPassword(user.id);
       if (storedPassword == null) {
         _logger.severe('Senha não encontrada para usuário: ${user.id}');
         return null;
@@ -155,7 +155,7 @@ class AuthService {
       if (payload == null) return null;
       
       final userId = payload['user_id'] as String;
-      return await _supabase.getUserById(userId);
+      return await _database.getUserById(userId);
       
     } catch (e) {
       _logger.warning('Erro ao buscar usuário do token: $e');

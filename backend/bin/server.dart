@@ -9,11 +9,11 @@ import 'package:logging/logging.dart';
 import '../lib/routes/auth_routes.dart';
 import '../lib/routes/premium_routes.dart';
 import '../lib/routes/backup_routes.dart';
-import '../lib/routes/trabalho_routes.dart';
-import '../lib/routes/gastos_routes.dart';
-import '../lib/routes/manutencao_routes.dart';
+import '../lib/routes/trabalho_routes_stub.dart';
+import '../lib/routes/gastos_routes_stub.dart';
+import '../lib/routes/manutencao_routes_stub.dart';
 import '../lib/services/auth_service.dart';
-import '../lib/services/supabase_service.dart';
+import '../lib/services/database_service.dart';
 import '../lib/middleware/error_handler.dart';
 import '../lib/middleware/auth_middleware.dart';
 
@@ -56,31 +56,19 @@ void main() async {
   // Carregar variáveis de ambiente
   final env = DotEnv(includePlatformEnvironment: true)..load();
   
-  final port = int.parse(Platform.environment['PORT'] ?? env['PORT'] ?? '5000');
+  final port = int.parse(Platform.environment['PORT'] ?? env['PORT'] ?? '8080');
   final host = Platform.environment['HOST'] ?? env['HOST'] ?? '0.0.0.0';
 
   _logger.info('Iniciando servidor KM\$ Backend Dart...');
   
   // Inicializar serviços
-  final supabaseUrl = Platform.environment['SUPABASE_URL'] ?? env['SUPABASE_URL'];
-  final supabaseAnonKey = Platform.environment['SUPABASE_ANON_KEY'] ?? env['SUPABASE_ANON_KEY'];
   final jwtSecret = Platform.environment['JWT_SECRET'] ?? env['JWT_SECRET'] ?? 'seu_jwt_secret_muito_seguro_km_dollar_backend_aqui';
+  final dbPath = Platform.environment['DB_PATH'] ?? env['DB_PATH'] ?? 'km_dollar.db';
   
-  if (supabaseUrl == null || supabaseAnonKey == null) {
-    _logger.severe('SUPABASE_URL e SUPABASE_ANON_KEY são obrigatórios no .env');
-    exit(1);
-  }
+  final databaseService = DatabaseService(dbPath);
+  final authService = AuthService(databaseService, jwtSecret);
   
-  final supabaseService = SupabaseService(supabaseUrl, supabaseAnonKey);
-  final authService = AuthService(supabaseService, jwtSecret);
-  
-  // Inicializar tabelas do banco (executar apenas uma vez)
-  try {
-    await supabaseService.initializeTables();
-    _logger.info('Banco de dados inicializado');
-  } catch (e) {
-    _logger.warning('Erro ao inicializar tabelas (pode já existirem): $e');
-  }
+  _logger.info('Banco de dados SQLite inicializado: $dbPath');
 
   // Configurar router principal
   final router = Router()
@@ -168,8 +156,8 @@ Response _homeHandler(Request request) {
 </head>
 <body>
     <h1>🚀 KM\$ Backend API</h1>
-    <p class="status">✅ Servidor funcionando na porta 5000</p>
-    <p class="status">✅ Supabase PostgreSQL conectado</p>
+    <p class="status">✅ Servidor funcionando na porta 8080</p>
+    <p class="status">✅ SQLite Database conectado</p>
     
     <h2>📡 Endpoints Disponíveis:</h2>
     <div class="endpoint"><span class="method">GET</span> /health - Health check</div>
