@@ -30,7 +30,7 @@ class OnlineDataService {
       if (response.success && response.data != null) {
         final serverData = response.data!['data'];
         final updatedTrabalho = trabalho.copyWith(
-          id: int.tryParse(serverData['id'].toString()),
+          id: serverData['id']?.toString(),
         );
         await _db.insertOrUpdateTrabalho(updatedTrabalho);
         return OnlineOperationResult(success: true, message: 'Salvo!');
@@ -71,7 +71,7 @@ class OnlineDataService {
       if (response.success && response.data != null) {
         final serverData = response.data!['data'];
         final updatedGasto = gasto.copyWith(
-          id: int.tryParse(serverData['id'].toString()),
+          id: serverData['id']?.toString(),
         );
         await _db.insertOrUpdateGasto(updatedGasto);
         return OnlineOperationResult(success: true, message: 'Salvo!');
@@ -112,7 +112,7 @@ class OnlineDataService {
       if (response.success && response.data != null) {
         final serverData = response.data!['data'];
         final updatedManutencao = manutencao.copyWith(
-          id: int.tryParse(serverData['id'].toString()),
+          id: serverData['id']?.toString(),
         );
         await _db.insertOrUpdateManutencao(updatedManutencao);
         return OnlineOperationResult(success: true, message: 'Salvo!');
