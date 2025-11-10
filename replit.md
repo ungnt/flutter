@@ -28,9 +28,9 @@ Aplicativo de controle financeiro desenvolvido em Flutter, voltado para motorist
 
 ## Arquitetura
 - **Frontend**: Flutter (Android/iOS/Desktop)
-- **Backend**: Dart com Shelf framework
-- **Banco de Dados**: SQLite local + Supabase PostgreSQL (sincronização)
-- **Estratégia**: Offline-first com sync opcional para nuvem
+- **Backend**: Dart com Shelf framework (porta 5000)
+- **Banco de Dados**: SQLite no backend (km_dollar.db)
+- **Estratégia**: Login obrigatório + transmissão em tempo real + isolamento por user_id
 
 ## Estrutura do Projeto
 
@@ -61,7 +61,10 @@ Aplicativo de controle financeiro desenvolvido em Flutter, voltado para motorist
   - dart_jsonwebtoken: ^2.13.0 (autenticação JWT)
 
 ### Banco de Dados
--trabalhando... mas sera dentro do backend.
+- **SQLite no backend** (`km_dollar.db`)
+- **Tabelas**: users, trabalho, gastos, manutencao
+- **Isolamento**: Todos os registros filtrados por `user_id`
+- **Segurança**: DELETE/UPDATE validam propriedade do registro (retornam 404 se não pertencer ao usuário)
 
 ## Configuração e Execução
 
@@ -105,8 +108,8 @@ PORT=5000 dart run bin/server.dart
 ### 5. Backup e Sincronização
 - Backup local (JSON)
 - Compartilhamento via share
-- Sync com nuvem (Supabase)
-- Resolução de conflitos
+- Transmissão em tempo real para backend (OnlineDataService)
+- Dados sincronizados a cada ação do usuário
 
 ## Tema "Grau 244"
 Interface moderna com estética jovem motociclista:
@@ -116,11 +119,12 @@ Interface moderna com estética jovem motociclista:
 - Design limpo e intuitivo
 
 ## Segurança
-- Autenticação JWT com refresh tokens
-- Senhas hasheadas (bcrypt)
-- Row Level Security no Supabase
-- HTTPS obrigatório para comunicação
-- Variáveis de ambiente para secrets
+- **Login obrigatório** (estilo Facebook)
+- **JWT** com refresh tokens
+- **Senhas hasheadas** (bcrypt)
+- **Isolamento de dados**: WHERE user_id = ? em todas as queries
+- **Validação de propriedade**: DELETE/UPDATE verificam se registro pertence ao usuário (SELECT changes())
+- **Multi-window Android**: Habilitado via android:resizeableActivity="true" na <activity>
 
 ## CI/CD
 - **Plataforma**: Codemagic

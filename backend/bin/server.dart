@@ -56,7 +56,7 @@ void main() async {
   // Carregar variáveis de ambiente
   final env = DotEnv(includePlatformEnvironment: true)..load();
   
-  final port = int.parse(Platform.environment['PORT'] ?? env['PORT'] ?? '8080');
+  final port = int.parse(Platform.environment['PORT'] ?? env['PORT'] ?? '5000');
   final host = Platform.environment['HOST'] ?? env['HOST'] ?? '0.0.0.0';
 
   _logger.info('Iniciando servidor KM\$ Backend Dart...');
