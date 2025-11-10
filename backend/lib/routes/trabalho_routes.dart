@@ -114,7 +114,14 @@ class TrabalhoRoutes {
         );
       }
 
-      _databaseService.deleteTrabalho(id);
+      final affectedRows = _databaseService.deleteTrabalho(id, userId);
+
+      if (affectedRows == 0) {
+        return Response.notFound(
+          jsonEncode({'success': false, 'message': 'Trabalho não encontrado'}),
+          headers: {'Content-Type': 'application/json'},
+        );
+      }
 
       return Response.ok(
         jsonEncode({

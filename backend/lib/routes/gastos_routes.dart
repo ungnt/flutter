@@ -113,7 +113,14 @@ class GastosRoutes {
         );
       }
 
-      _databaseService.deleteGasto(id);
+      final affectedRows = _databaseService.deleteGasto(id, userId);
+
+      if (affectedRows == 0) {
+        return Response.notFound(
+          jsonEncode({'success': false, 'message': 'Gasto não encontrado'}),
+          headers: {'Content-Type': 'application/json'},
+        );
+      }
 
       return Response.ok(
         jsonEncode({

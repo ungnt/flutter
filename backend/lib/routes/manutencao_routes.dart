@@ -114,7 +114,14 @@ class ManutencaoRoutes {
         );
       }
 
-      _databaseService.deleteManutencao(id);
+      final affectedRows = _databaseService.deleteManutencao(id, userId);
+
+      if (affectedRows == 0) {
+        return Response.notFound(
+          jsonEncode({'success': false, 'message': 'Manutenção não encontrada'}),
+          headers: {'Content-Type': 'application/json'},
+        );
+      }
 
       return Response.ok(
         jsonEncode({

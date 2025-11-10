@@ -278,15 +278,19 @@ class DatabaseService {
     return result.map((row) => Map<String, dynamic>.from(row)).toList();
   }
 
-  void updateTrabalho(String id, Map<String, dynamic> data) {
+  int updateTrabalho(String id, String userId, Map<String, dynamic> data) {
     _db.execute(
-      'UPDATE trabalho SET ganhos = ?, km = ?, horas = ?, observacoes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [data['ganhos'], data['km'], data['horas'], data['observacoes'], id]
+      'UPDATE trabalho SET ganhos = ?, km = ?, horas = ?, observacoes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?',
+      [data['ganhos'], data['km'], data['horas'], data['observacoes'], id, userId]
     );
+    final result = _db.select('SELECT changes()');
+    return result.first.values.first as int;
   }
 
-  void deleteTrabalho(String id) {
-    _db.execute('DELETE FROM trabalho WHERE id = ?', [id]);
+  int deleteTrabalho(String id, String userId) {
+    _db.execute('DELETE FROM trabalho WHERE id = ? AND user_id = ?', [id, userId]);
+    final result = _db.select('SELECT changes()');
+    return result.first.values.first as int;
   }
 
   Future<String> createGasto(Map<String, dynamic> data) async {
@@ -303,15 +307,19 @@ class DatabaseService {
     return result.map((row) => Map<String, dynamic>.from(row)).toList();
   }
 
-  void updateGasto(String id, Map<String, dynamic> data) {
+  int updateGasto(String id, String userId, Map<String, dynamic> data) {
     _db.execute(
-      'UPDATE gastos SET categoria = ?, valor = ?, descricao = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [data['categoria'], data['valor'], data['descricao'], id]
+      'UPDATE gastos SET categoria = ?, valor = ?, descricao = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?',
+      [data['categoria'], data['valor'], data['descricao'], id, userId]
     );
+    final result = _db.select('SELECT changes()');
+    return result.first.values.first as int;
   }
 
-  void deleteGasto(String id) {
-    _db.execute('DELETE FROM gastos WHERE id = ?', [id]);
+  int deleteGasto(String id, String userId) {
+    _db.execute('DELETE FROM gastos WHERE id = ? AND user_id = ?', [id, userId]);
+    final result = _db.select('SELECT changes()');
+    return result.first.values.first as int;
   }
 
   Future<String> createManutencao(Map<String, dynamic> data) async {
@@ -328,15 +336,19 @@ class DatabaseService {
     return result.map((row) => Map<String, dynamic>.from(row)).toList();
   }
 
-  void updateManutencao(String id, Map<String, dynamic> data) {
+  int updateManutencao(String id, String userId, Map<String, dynamic> data) {
     _db.execute(
-      'UPDATE manutencao SET tipo = ?, valor = ?, km_atual = ?, descricao = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [data['tipo'], data['valor'], data['km_atual'], data['descricao'], id]
+      'UPDATE manutencao SET tipo = ?, valor = ?, km_atual = ?, descricao = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?',
+      [data['tipo'], data['valor'], data['km_atual'], data['descricao'], id, userId]
     );
+    final result = _db.select('SELECT changes()');
+    return result.first.values.first as int;
   }
 
-  void deleteManutencao(String id) {
-    _db.execute('DELETE FROM manutencao WHERE id = ?', [id]);
+  int deleteManutencao(String id, String userId) {
+    _db.execute('DELETE FROM manutencao WHERE id = ? AND user_id = ?', [id, userId]);
+    final result = _db.select('SELECT changes()');
+    return result.first.values.first as int;
   }
 
   void close() {
