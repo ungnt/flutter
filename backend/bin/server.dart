@@ -87,7 +87,7 @@ void main() async {
     ..mount('/api/backup/', 
       const Pipeline()
         .addMiddleware(authMiddleware(authService))
-        .addHandler(BackupRoutes().router))
+        .addHandler(BackupRoutes(databaseService, authService).router))
     ..mount('/api/trabalho/', 
       const Pipeline()
         .addMiddleware(authMiddleware(authService))

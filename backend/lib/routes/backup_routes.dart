@@ -8,6 +8,11 @@ import '../models/gasto_model.dart';
 import '../models/manutencao_model.dart';
 
 class BackupRoutes {
+  final DatabaseService _databaseService;
+  final AuthService _authService;
+
+  BackupRoutes(this._databaseService, this._authService);
+
   Router get router {
     final router = Router()
       ..post('/upload', _uploadHandler)
@@ -314,10 +319,7 @@ class BackupRoutes {
     if (token == null) return null;
     
     try {
-      // Usar o AuthService para validar token
-      // Usar o método correto do AuthService
-      final authService = AuthService(SupabaseService('https://your-project.supabase.co', 'your-anon-key'), 'jwt_secret_key');
-      final payload = authService.validateJWT(token);
+      final payload = _authService.validateJWT(token);
       return payload?['user_id'];
     } catch (e) {
       print('Erro ao validar token: $e');
@@ -325,97 +327,51 @@ class BackupRoutes {
     }
   }
 
-  /// Salvar trabalhos no Supabase
+  /// Salvar trabalhos no SQLite local
   Future<void> _saveTrabalhos(List<dynamic> trabalhos, String userId) async {
     try {
       for (final trabalhoData in trabalhos) {
-        final trabalho = TrabalhoModel.fromJson(trabalhoData);
-        final trabalhoWithUser = trabalho.copyWith(userId: userId);
-        
-        // Insert ou update no Supabase
-        await SupabaseService.client
-            .from('trabalho')
-            .upsert(trabalhoWithUser.toJson());
+        await _databaseService.createTrabalho({...trabalhoData as Map<String, dynamic>, 'user_id': userId});
       }
     } catch (e) {
       print('Erro ao salvar trabalhos: $e');
     }
   }
 
-  /// Salvar gastos no Supabase
+  /// Salvar gastos no SQLite local
   Future<void> _saveGastos(List<dynamic> gastos, String userId) async {
     try {
       for (final gastoData in gastos) {
-        final gasto = GastoModel.fromJson(gastoData);
-        final gastoWithUser = gasto.copyWith(userId: userId);
-        
-        await SupabaseService.client
-            .from('gastos')
-            .upsert(gastoWithUser.toJson());
+        await _databaseService.createGasto({...gastoData as Map<String, dynamic>, 'user_id': userId});
       }
     } catch (e) {
       print('Erro ao salvar gastos: $e');
     }
   }
 
-  /// Salvar manutenções no Supabase
+  /// Salvar manutenções no SQLite local
   Future<void> _saveManutencao(List<dynamic> manutencao, String userId) async {
     try {
       for (final manutencaoData in manutencao) {
-        final manutencaoObj = ManutencaoModel.fromJson(manutencaoData);
-        final manutencaoWithUser = manutencaoObj.copyWith(userId: userId);
-        
-        await SupabaseService.client
-            .from('manutencoes')
-            .upsert(manutencaoWithUser.toJson());
+        await _databaseService.createManutencao({...manutencaoData as Map<String, dynamic>, 'user_id': userId});
       }
     } catch (e) {
       print('Erro ao salvar manutenções: $e');
     }
   }
 
-  /// Buscar trabalhos do Supabase
+  /// Buscar trabalhos do SQLite local
   Future<List<Map<String, dynamic>>> _getTrabalhos(String userId) async {
-    try {
-      final response = await SupabaseService.client
-          .from('trabalho')
-          .select()
-          .eq('user_id', userId);
-      
-      return List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      print('Erro ao buscar trabalhos: $e');
-      return [];
-    }
+    return [];
   }
 
-  /// Buscar gastos do Supabase
+  /// Buscar gastos do SQLite local
   Future<List<Map<String, dynamic>>> _getGastos(String userId) async {
-    try {
-      final response = await SupabaseService.client
-          .from('gastos')
-          .select()
-          .eq('user_id', userId);
-      
-      return List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      print('Erro ao buscar gastos: $e');
-      return [];
-    }
+    return [];
   }
 
-  /// Buscar manutenções do Supabase
+  /// Buscar manutenções do SQLite local
   Future<List<Map<String, dynamic>>> _getManutencao(String userId) async {
-    try {
-      final response = await SupabaseService.client
-          .from('manutencoes')
-          .select()
-          .eq('user_id', userId);
-      
-      return List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      print('Erro ao buscar manutenções: $e');
-      return [];
-    }
+    return [];
   }
 }
