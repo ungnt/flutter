@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import '../models/trabalho_model.dart';
 import '../models/gasto_model.dart';
 import '../models/manutencao_model.dart';
@@ -18,6 +20,18 @@ class DatabaseService {
   }
 
   Future<Database> _initDatabase() async {
+    // Para web, usar sqflite_common_ffi_web
+    if (kIsWeb) {
+      databaseFactory = databaseFactoryFfiWeb;
+      return await openDatabase(
+        'km_dollar_web.db',
+        version: 3,
+        onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
+      );
+    }
+    
+    // Para mobile/desktop, usar path normal
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'km_dollar.db');
 
@@ -290,7 +304,7 @@ class DatabaseService {
   /// Insert ou Update manutenção (para sincronização)
   Future<int> insertOrUpdateManutencao(ManutencaoModel manutencao) async {
     final db = await database;
-    return await db.insertWithOnConflict(
+    return await db.insert(
       'manutencao',
       manutencao.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
@@ -300,7 +314,7 @@ class DatabaseService {
   /// Insert ou Update gasto (para sincronização)
   Future<int> insertOrUpdateGasto(GastoModel gasto) async {
     final db = await database;
-    return await db.insertWithOnConflict(
+    return await db.insert(
       'gastos',
       gasto.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
@@ -310,7 +324,7 @@ class DatabaseService {
   /// Insert ou Update trabalho (para sincronização)
   Future<int> insertOrUpdateTrabalho(TrabalhoModel trabalho) async {
     final db = await database;
-    return await db.insertWithOnConflict(
+    return await db.insert(
       'trabalho',
       trabalho.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
