@@ -1,4 +1,26 @@
-# KM$ (Motouber) - Aplicativo de Controle Financeiro
+# REGRAS DO USUÁRIO - OBRIGATÓRIAS PARA TODOS OS AGENTES
+
+1. **Seja direto e objetivo** - Responda de forma breve. Quando possível, use apenas "Sim" ou "Não"
+
+2. **Faça apenas o que foi pedido** - Nada além do solicitado
+
+3. **Não faça nada além do que foi pedido** - Sem iniciativas extras
+
+4. **Em caso de dúvida, pergunte** - Sempre pare e pergunte, mesmo que ache que entendeu
+
+5. **Flutter não roda aqui** - Projetos Flutter NÃO podem ser executados no Replit. Build é feito via Codemagic (usuário faz via `git add .` e `git push`)
+
+6. **Backend roda aqui** - Backend Dart/Shelf executa no Replit para análise e testes com banco de dados
+
+
+
+
+
+
+
+
+
+KM$ (Motouber) - Aplicativo de Controle Financeiro
 
 ## Visão Geral
 Aplicativo de controle financeiro desenvolvido em Flutter, voltado para motoristas de aplicativo e motociclistas. Oferece gestão completa de ganhos, gastos e manutenções do veículo, com funcionalidades de relatórios, metas, backup local/nuvem e sincronização multi-dispositivo.
