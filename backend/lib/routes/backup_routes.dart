@@ -67,13 +67,16 @@ class BackupRoutes {
         );
       }
 
-      // Salvar trabalhos no Supabase
+      // Salvar trabalhos no SQLite
+      print('📥 Salvando ${trabalhos.length} trabalhos para usuário $userId');
       await _saveTrabalhos(trabalhos, userId);
       
-      // Salvar gastos no Supabase
+      // Salvar gastos no SQLite
+      print('📥 Salvando ${gastos.length} gastos para usuário $userId');
       await _saveGastos(gastos, userId);
       
-      // Salvar manutenções no Supabase
+      // Salvar manutenções no SQLite
+      print('📥 Salvando ${manutencao.length} manutenções para usuário $userId');
       await _saveManutencao(manutencao, userId);
       
       final totalRecords = trabalhos.length + gastos.length + manutencao.length;
@@ -362,16 +365,37 @@ class BackupRoutes {
 
   /// Buscar trabalhos do SQLite local
   Future<List<Map<String, dynamic>>> _getTrabalhos(String userId) async {
-    return [];
+    try {
+      final trabalhos = _databaseService.getTrabalhosByUser(userId);
+      print('📤 Retornando ${trabalhos.length} trabalhos para usuário $userId');
+      return trabalhos;
+    } catch (e) {
+      print('❌ Erro ao buscar trabalhos: $e');
+      return [];
+    }
   }
 
   /// Buscar gastos do SQLite local
   Future<List<Map<String, dynamic>>> _getGastos(String userId) async {
-    return [];
+    try {
+      final gastos = _databaseService.getGastosByUser(userId);
+      print('📤 Retornando ${gastos.length} gastos para usuário $userId');
+      return gastos;
+    } catch (e) {
+      print('❌ Erro ao buscar gastos: $e');
+      return [];
+    }
   }
 
   /// Buscar manutenções do SQLite local
   Future<List<Map<String, dynamic>>> _getManutencao(String userId) async {
-    return [];
+    try {
+      final manutencoes = _databaseService.getManutencoesByUser(userId);
+      print('📤 Retornando ${manutencoes.length} manutenções para usuário $userId');
+      return manutencoes;
+    } catch (e) {
+      print('❌ Erro ao buscar manutenções: $e');
+      return [];
+    }
   }
 }
