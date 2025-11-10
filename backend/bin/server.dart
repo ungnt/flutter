@@ -9,9 +9,9 @@ import 'package:logging/logging.dart';
 import '../lib/routes/auth_routes.dart';
 import '../lib/routes/premium_routes.dart';
 import '../lib/routes/backup_routes.dart';
-import '../lib/routes/trabalho_routes_stub.dart';
-import '../lib/routes/gastos_routes_stub.dart';
-import '../lib/routes/manutencao_routes_stub.dart';
+import '../lib/routes/trabalho_routes.dart';
+import '../lib/routes/gastos_routes.dart';
+import '../lib/routes/manutencao_routes.dart';
 import '../lib/services/auth_service.dart';
 import '../lib/services/database_service.dart';
 import '../lib/middleware/error_handler.dart';
@@ -91,15 +91,15 @@ void main() async {
     ..mount('/api/trabalho/', 
       const Pipeline()
         .addMiddleware(authMiddleware(authService))
-        .addHandler(TrabalhoRoutes.router))
+        .addHandler(TrabalhoRoutes(databaseService, authService).router))
     ..mount('/api/gastos/', 
       const Pipeline()
         .addMiddleware(authMiddleware(authService))
-        .addHandler(GastosRoutes.router))
+        .addHandler(GastosRoutes(databaseService, authService).router))
     ..mount('/api/manutencao/', 
       const Pipeline()
         .addMiddleware(authMiddleware(authService))
-        .addHandler(ManutencaoRoutes.router))
+        .addHandler(ManutencaoRoutes(databaseService, authService).router))
     
     // 404 para rotas não encontradas
     ..all('/<ignored|.*>', _notFoundHandler);

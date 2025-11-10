@@ -396,6 +396,59 @@ class ApiService {
       return false;
     }
   }
+
+  // Helpers genéricos para CRUD
+  static Future<ApiResponse> post({
+    required String endpoint,
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse(_getEndpointUrl(endpoint)),
+        headers: await _authHeaders,
+        body: jsonEncode(data),
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro na requisição: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> get({required String endpoint}) async {
+    try {
+      final response = await http.get(
+        Uri.parse(_getEndpointUrl(endpoint)),
+        headers: await _authHeaders,
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro na requisição: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> delete({required String endpoint}) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(_getEndpointUrl(endpoint)),
+        headers: await _authHeaders,
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro na requisição: $e',
+      );
+    }
+  }
 }
 
 class ApiResponse {

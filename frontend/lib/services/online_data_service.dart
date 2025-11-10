@@ -17,176 +17,143 @@ class OnlineDataService {
     if (!_connectivity.isOnline) {
       return OnlineOperationResult(
         success: false,
-        message: 'Sem conexão com a internet. Não é possível adicionar registro.',
+        message: 'Sem conexão. Não é possível adicionar registro.',
       );
     }
 
     try {
-      final response = await ApiService.uploadTrabalhos([trabalho.toJson()]);
+      final response = await ApiService.post(
+        endpoint: 'trabalho/',
+        data: trabalho.toJson(),
+      );
       
-      if (response.success) {
-        await _db.insertOrUpdateTrabalho(trabalho);
-        return OnlineOperationResult(
-          success: true,
-          message: 'Registro salvo com sucesso!',
+      if (response.success && response.data != null) {
+        final serverData = response.data!['data'];
+        final updatedTrabalho = trabalho.copyWith(
+          id: int.tryParse(serverData['id'].toString()),
         );
+        await _db.insertOrUpdateTrabalho(updatedTrabalho);
+        return OnlineOperationResult(success: true, message: 'Salvo!');
       } else {
-        return OnlineOperationResult(
-          success: false,
-          message: response.message,
-        );
+        return OnlineOperationResult(success: false, message: response.message);
       }
     } catch (e) {
-      return OnlineOperationResult(
-        success: false,
-        message: 'Erro ao salvar: $e',
-      );
+      return OnlineOperationResult(success: false, message: 'Erro: $e');
     }
   }
 
   Future<OnlineOperationResult> deleteTrabalho(int id) async {
     if (!_connectivity.isOnline) {
-      return OnlineOperationResult(
-        success: false,
-        message: 'Sem conexão com a internet. Não é possível excluir registro.',
-      );
+      return OnlineOperationResult(success: false, message: 'Sem conexão.');
     }
 
     try {
-      await _db.deleteTrabalho(id);
-      return OnlineOperationResult(
-        success: true,
-        message: 'Registro excluído com sucesso!',
-      );
+      final response = await ApiService.delete(endpoint: 'trabalho/$id');
+      if (response.success) {
+        await _db.deleteTrabalho(id);
+        return OnlineOperationResult(success: true, message: 'Excluído!');
+      } else {
+        return OnlineOperationResult(success: false, message: response.message);
+      }
     } catch (e) {
-      return OnlineOperationResult(
-        success: false,
-        message: 'Erro ao excluir: $e',
-      );
+      return OnlineOperationResult(success: false, message: 'Erro: $e');
     }
   }
 
   Future<OnlineOperationResult> createGasto(GastoModel gasto) async {
     if (!_connectivity.isOnline) {
-      return OnlineOperationResult(
-        success: false,
-        message: 'Sem conexão com a internet. Não é possível adicionar gasto.',
-      );
+      return OnlineOperationResult(success: false, message: 'Sem conexão.');
     }
 
     try {
-      final response = await ApiService.uploadGastos([gasto.toJson()]);
+      final response = await ApiService.post(endpoint: 'gastos/', data: gasto.toJson());
       
-      if (response.success) {
-        await _db.insertOrUpdateGasto(gasto);
-        return OnlineOperationResult(
-          success: true,
-          message: 'Gasto salvo com sucesso!',
+      if (response.success && response.data != null) {
+        final serverData = response.data!['data'];
+        final updatedGasto = gasto.copyWith(
+          id: int.tryParse(serverData['id'].toString()),
         );
+        await _db.insertOrUpdateGasto(updatedGasto);
+        return OnlineOperationResult(success: true, message: 'Salvo!');
       } else {
-        return OnlineOperationResult(
-          success: false,
-          message: response.message,
-        );
+        return OnlineOperationResult(success: false, message: response.message);
       }
     } catch (e) {
-      return OnlineOperationResult(
-        success: false,
-        message: 'Erro ao salvar gasto: $e',
-      );
+      return OnlineOperationResult(success: false, message: 'Erro: $e');
     }
   }
 
   Future<OnlineOperationResult> deleteGasto(int id) async {
     if (!_connectivity.isOnline) {
-      return OnlineOperationResult(
-        success: false,
-        message: 'Sem conexão com a internet. Não é possível excluir gasto.',
-      );
+      return OnlineOperationResult(success: false, message: 'Sem conexão.');
     }
 
     try {
-      await _db.deleteGasto(id);
-      return OnlineOperationResult(
-        success: true,
-        message: 'Gasto excluído com sucesso!',
-      );
+      final response = await ApiService.delete(endpoint: 'gastos/$id');
+      if (response.success) {
+        await _db.deleteGasto(id);
+        return OnlineOperationResult(success: true, message: 'Excluído!');
+      } else {
+        return OnlineOperationResult(success: false, message: response.message);
+      }
     } catch (e) {
-      return OnlineOperationResult(
-        success: false,
-        message: 'Erro ao excluir gasto: $e',
-      );
+      return OnlineOperationResult(success: false, message: 'Erro: $e');
     }
   }
 
   Future<OnlineOperationResult> createManutencao(ManutencaoModel manutencao) async {
     if (!_connectivity.isOnline) {
-      return OnlineOperationResult(
-        success: false,
-        message: 'Sem conexão com a internet. Não é possível adicionar manutenção.',
-      );
+      return OnlineOperationResult(success: false, message: 'Sem conexão.');
     }
 
     try {
-      final response = await ApiService.uploadManutencao([manutencao.toJson()]);
+      final response = await ApiService.post(endpoint: 'manutencao/', data: manutencao.toJson());
       
-      if (response.success) {
-        await _db.insertOrUpdateManutencao(manutencao);
-        return OnlineOperationResult(
-          success: true,
-          message: 'Manutenção salva com sucesso!',
+      if (response.success && response.data != null) {
+        final serverData = response.data!['data'];
+        final updatedManutencao = manutencao.copyWith(
+          id: int.tryParse(serverData['id'].toString()),
         );
+        await _db.insertOrUpdateManutencao(updatedManutencao);
+        return OnlineOperationResult(success: true, message: 'Salvo!');
       } else {
-        return OnlineOperationResult(
-          success: false,
-          message: response.message,
-        );
+        return OnlineOperationResult(success: false, message: response.message);
       }
     } catch (e) {
-      return OnlineOperationResult(
-        success: false,
-        message: 'Erro ao salvar manutenção: $e',
-      );
+      return OnlineOperationResult(success: false, message: 'Erro: $e');
     }
   }
 
   Future<OnlineOperationResult> deleteManutencao(String id) async {
     if (!_connectivity.isOnline) {
-      return OnlineOperationResult(
-        success: false,
-        message: 'Sem conexão com a internet. Não é possível excluir manutenção.',
-      );
+      return OnlineOperationResult(success: false, message: 'Sem conexão.');
     }
 
     try {
-      await _db.deleteManutencao(id);
-      return OnlineOperationResult(
-        success: true,
-        message: 'Manutenção excluída com sucesso!',
-      );
+      final response = await ApiService.delete(endpoint: 'manutencao/$id');
+      if (response.success) {
+        await _db.deleteManutencao(id);
+        return OnlineOperationResult(success: true, message: 'Excluído!');
+      } else {
+        return OnlineOperationResult(success: false, message: response.message);
+      }
     } catch (e) {
-      return OnlineOperationResult(
-        success: false,
-        message: 'Erro ao excluir manutenção: $e',
-      );
+      return OnlineOperationResult(success: false, message: 'Erro: $e');
     }
   }
 
   Future<OnlineOperationResult> loadAllDataFromBackend() async {
     if (!_connectivity.isOnline) {
-      return OnlineOperationResult(
-        success: false,
-        message: 'Offline - mostrando dados em cache',
-      );
+      return OnlineOperationResult(success: false, message: 'Offline - mostrando cache');
     }
 
     try {
-      final trabalhoResponse = await ApiService.downloadTrabalhos();
-      final gastosResponse = await ApiService.downloadGastos();
-      final manutencoesResponse = await ApiService.downloadManutencoes();
+      final trabalhoResp = await ApiService.get(endpoint: 'trabalho/');
+      final gastosResp = await ApiService.get(endpoint: 'gastos/');
+      final manutencoesResp = await ApiService.get(endpoint: 'manutencao/');
 
-      if (trabalhoResponse.success && trabalhoResponse.data != null) {
-        final trabalhos = (trabalhoResponse.data!['trabalhos'] as List?)
+      if (trabalhoResp.success && trabalhoResp.data != null) {
+        final trabalhos = (trabalhoResp.data!['data']?['trabalhos'] as List?)
             ?.map((json) => TrabalhoModel.fromJson(json))
             .toList() ?? [];
         
@@ -195,8 +162,8 @@ class OnlineDataService {
         }
       }
 
-      if (gastosResponse.success && gastosResponse.data != null) {
-        final gastos = (gastosResponse.data!['gastos'] as List?)
+      if (gastosResp.success && gastosResp.data != null) {
+        final gastos = (gastosResp.data!['data']?['gastos'] as List?)
             ?.map((json) => GastoModel.fromJson(json))
             .toList() ?? [];
         
@@ -205,8 +172,8 @@ class OnlineDataService {
         }
       }
 
-      if (manutencoesResponse.success && manutencoesResponse.data != null) {
-        final manutencoes = (manutencoesResponse.data!['manutencao'] as List?)
+      if (manutencoesResp.success && manutencoesResp.data != null) {
+        final manutencoes = (manutencoesResp.data!['data']?['manutencao'] as List? ?? manutencoesResp.data!['data']?['manutencoes'] as List?)
             ?.map((json) => ManutencaoModel.fromJson(json))
             .toList() ?? [];
         
@@ -215,15 +182,9 @@ class OnlineDataService {
         }
       }
 
-      return OnlineOperationResult(
-        success: true,
-        message: 'Dados atualizados do servidor',
-      );
+      return OnlineOperationResult(success: true, message: 'Atualizado!');
     } catch (e) {
-      return OnlineOperationResult(
-        success: false,
-        message: 'Erro ao carregar dados: $e',
-      );
+      return OnlineOperationResult(success: false, message: 'Erro: $e');
     }
   }
 }
@@ -232,8 +193,5 @@ class OnlineOperationResult {
   final bool success;
   final String message;
 
-  OnlineOperationResult({
-    required this.success,
-    required this.message,
-  });
+  OnlineOperationResult({required this.success, required this.message});
 }
