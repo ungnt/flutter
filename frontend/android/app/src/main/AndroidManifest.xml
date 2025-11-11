@@ -36,11 +36,20 @@
         <meta-data 
             android:name="android.allow_multiple_resumed_activities" 
             android:value="true" />
+        
+        <!-- Suporte MIUI Floating Windows -->
+        <meta-data 
+            android:name="android.max_aspect" 
+            android:value="2.4" />
+        
+        <meta-data 
+            android:name="notch.config" 
+            android:value="portrait|landscape" />
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="standard"
+            android:launchMode="singleTask"
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
@@ -48,7 +57,8 @@
             android:resizeableActivity="true"
             android:supportsPictureInPicture="true"
             android:documentLaunchMode="always"
-            android:persistableMode="persistNever">
+            android:persistableMode="persistNever"
+            android:screenOrientation="unspecified">
 
             <layout
                 android:minWidth="300dp"
@@ -64,7 +74,9 @@
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
                 <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/>
+                <category android:name="android.intent.category.APP_MARKET"/>
             </intent-filter>
         </activity>
 
