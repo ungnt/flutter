@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/database_service.dart';
+import '../services/api_service.dart';
 import '../services/theme_service.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
@@ -15,11 +15,10 @@ class ConfiguracoesScreen extends StatefulWidget {
 
 class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final DatabaseService _db = DatabaseService.instance;
 
-  List<String> _categoriasGastos = [];
-  List<String> _tiposManutencao = [];
-  Map<String, int> _intervalosManutencao = {};
+  List<Map<String, dynamic>> _categoriasGastos = [];
+  List<Map<String, dynamic>> _tiposManutencao = [];
+  List<Map<String, dynamic>> _intervalosManutencao = [];
   final _novaCategoria = TextEditingController();
   final _novoTipo = TextEditingController();
 
@@ -39,60 +38,93 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
   }
 
   Future<void> _loadConfiguracoes() async {
-    _categoriasGastos = await _db.getCategoriasGastos();
-    _tiposManutencao = await _db.getTiposManutencao();
-    _intervalosManutencao = await _db.getAllIntervalosManutencao();
+    final categoriasResp = await ApiService.getCategorias();
+    if (categoriasResp.success && categoriasResp.data != null) {
+      _categoriasGastos = List<Map<String, dynamic>>.from(categoriasResp.data!['categorias'] ?? []);
+    }
+
+    final tiposResp = await ApiService.getTiposManutencao();
+    if (tiposResp.success && tiposResp.data != null) {
+      _tiposManutencao = List<Map<String, dynamic>>.from(tiposResp.data!['tipos'] ?? []);
+    }
+
+    final intervalosResp = await ApiService.getIntervalosManutencao();
+    if (intervalosResp.success && intervalosResp.data != null) {
+      _intervalosManutencao = List<Map<String, dynamic>>.from(intervalosResp.data!['intervalos'] ?? []);
+    }
+
     setState(() {});
   }
 
   Future<void> _adicionarCategoria() async {
     if (_novaCategoria.text.isNotEmpty) {
-      _categoriasGastos.add(_novaCategoria.text);
-      await _db.setCategoriasGastos(_categoriasGastos);
-      _novaCategoria.clear();
-      setState(() {});
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Categoria adicionada com sucesso!')),
-      );
+      final response = await ApiService.createCategoria(_novaCategoria.text);
+      if (response.success) {
+        _novaCategoria.clear();
+        await _loadConfiguracoes();
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Categoria adicionada com sucesso!')),
+        );
+      } else {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response.message)),
+        );
+      }
     }
   }
 
-  Future<void> _removerCategoria(String categoria) async {
-    _categoriasGastos.remove(categoria);
-    await _db.setCategoriasGastos(_categoriasGastos);
-    setState(() {});
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Categoria removida com sucesso!')),
-    );
+  Future<void> _removerCategoria(String id) async {
+    final response = await ApiService.deleteCategoria(id);
+    if (response.success) {
+      await _loadConfiguracoes();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Categoria removida com sucesso!')),
+      );
+    } else {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response.message)),
+      );
+    }
   }
 
   Future<void> _adicionarTipo() async {
     if (_novoTipo.text.isNotEmpty) {
-      _tiposManutencao.add(_novoTipo.text);
-      await _db.setTiposManutencao(_tiposManutencao);
-      // Adicionar intervalo padrão de 5000 km para o novo tipo
-      await _db.setIntervaloManutencao(_novoTipo.text, 5000);
-      _intervalosManutencao[_novoTipo.text] = 5000;
-      _novoTipo.clear();
-      setState(() {});
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tipo de manutenção adicionado com sucesso!')),
-      );
+      final response = await ApiService.createTipoManutencao(_novoTipo.text);
+      if (response.success) {
+        await ApiService.updateIntervaloManutencao(_novoTipo.text, 5000);
+        _novoTipo.clear();
+        await _loadConfiguracoes();
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tipo de manutenção adicionado com sucesso!')),
+        );
+      } else {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response.message)),
+        );
+      }
     }
   }
 
-  Future<void> _removerTipo(String tipo) async {
-    _tiposManutencao.remove(tipo);
-    await _db.setTiposManutencao(_tiposManutencao);
-    _intervalosManutencao.remove(tipo);
-    setState(() {});
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tipo removido com sucesso!')),
-    );
+  Future<void> _removerTipo(String id) async {
+    final response = await ApiService.deleteTipoManutencao(id);
+    if (response.success) {
+      await _loadConfiguracoes();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tipo removido com sucesso!')),
+      );
+    } else {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response.message)),
+      );
+    }
   }
 
   Future<void> _editarIntervaloManutencao(String tipo, int intervaloAtual) async {
@@ -127,14 +159,21 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
             onPressed: () async {
               final novoIntervalo = int.tryParse(controller.text);
               if (novoIntervalo != null && novoIntervalo > 0) {
-                await _db.setIntervaloManutencao(tipo, novoIntervalo);
-                _intervalosManutencao[tipo] = novoIntervalo;
-                setState(() {});
-                Navigator.pop(context);
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Intervalo de $tipo atualizado para $novoIntervalo km')),
-                );
+                final response = await ApiService.updateIntervaloManutencao(tipo, novoIntervalo);
+                if (response.success) {
+                  await _loadConfiguracoes();
+                  Navigator.pop(context);
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Intervalo de $tipo atualizado para $novoIntervalo km')),
+                  );
+                } else {
+                  Navigator.pop(context);
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(response.message)),
+                  );
+                }
               }
             },
             child: const Text('Salvar'),
@@ -383,8 +422,8 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
             runSpacing: 8,
             children: _categoriasGastos.map((categoria) {
               return Chip(
-                label: Text(categoria),
-                onDeleted: () => _removerCategoria(categoria),
+                label: Text(categoria['nome'] ?? ''),
+                onDeleted: () => _removerCategoria(categoria['id'].toString()),
                 backgroundColor: AppTheme.primaryColor.withAlpha((255 * 0.1).toInt()),
               );
             }).toList(),
@@ -425,8 +464,8 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
             runSpacing: 8,
             children: _tiposManutencao.map((tipo) {
               return Chip(
-                label: Text(tipo),
-                onDeleted: () => _removerTipo(tipo),
+                label: Text(tipo['nome'] ?? ''),
+                onDeleted: () => _removerTipo(tipo['id'].toString()),
                 backgroundColor: AppTheme.warningColor.withAlpha((255 * 0.1).toInt()),
               );
             }).toList(),
@@ -453,16 +492,19 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
             )
           else
             Column(
-              children: _intervalosManutencao.entries.map((entry) {
+              children: _intervalosManutencao.map((intervalo) {
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
                     leading: const Icon(Icons.settings, color: AppTheme.primaryColor),
-                    title: Text(entry.key),
-                    subtitle: Text('Intervalo: ${entry.value} km'),
+                    title: Text(intervalo['tipo'] ?? ''),
+                    subtitle: Text('Intervalo: ${intervalo['intervalo']} km'),
                     trailing: IconButton(
                       icon: const Icon(Icons.edit, color: AppTheme.secondaryColor),
-                      onPressed: () => _editarIntervaloManutencao(entry.key, entry.value),
+                      onPressed: () => _editarIntervaloManutencao(
+                        intervalo['tipo'] ?? '',
+                        intervalo['intervalo'] ?? 5000,
+                      ),
                     ),
                   ),
                 );
@@ -579,7 +621,6 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
 
   Future<void> _clearAllData() async {
     try {
-      await _db.clearAllData();
       await AuthService.logout();
       
       if (!context.mounted) return;

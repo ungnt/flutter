@@ -351,6 +351,153 @@ class ApiService {
     }
   }
 
+  static Future<ApiResponse> getCategorias() async {
+    try {
+      final response = await http.get(
+        Uri.parse(_getEndpointUrl('categorias/')),
+        headers: await _authHeaders,
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro ao buscar categorias: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> createCategoria(String nome) async {
+    try {
+      final response = await http.post(
+        Uri.parse(_getEndpointUrl('categorias/')),
+        headers: await _authHeaders,
+        body: jsonEncode({'nome': nome}),
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro ao criar categoria: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> deleteCategoria(String id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(_getEndpointUrl('categorias/$id')),
+        headers: await _authHeaders,
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro ao deletar categoria: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> getTiposManutencao() async {
+    try {
+      final response = await http.get(
+        Uri.parse(_getEndpointUrl('tipos-manutencao/')),
+        headers: await _authHeaders,
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro ao buscar tipos de manutenção: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> createTipoManutencao(String nome) async {
+    try {
+      final response = await http.post(
+        Uri.parse(_getEndpointUrl('tipos-manutencao/')),
+        headers: await _authHeaders,
+        body: jsonEncode({'nome': nome}),
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro ao criar tipo de manutenção: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> deleteTipoManutencao(String id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(_getEndpointUrl('tipos-manutencao/$id')),
+        headers: await _authHeaders,
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro ao deletar tipo de manutenção: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> getIntervalosManutencao() async {
+    try {
+      final response = await http.get(
+        Uri.parse(_getEndpointUrl('intervalos-manutencao/')),
+        headers: await _authHeaders,
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro ao buscar intervalos: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> updateIntervaloManutencao(String tipo, int intervalo) async {
+    try {
+      final response = await http.put(
+        Uri.parse(_getEndpointUrl('intervalos-manutencao/')),
+        headers: await _authHeaders,
+        body: jsonEncode({'tipo': tipo, 'intervalo': intervalo}),
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro ao atualizar intervalo: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> deleteIntervaloManutencao(String id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(_getEndpointUrl('intervalos-manutencao/$id')),
+        headers: await _authHeaders,
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro ao deletar intervalo: $e',
+      );
+    }
+  }
+
   // Helper para processar respostas
   static ApiResponse _handleResponse(http.Response response) {
     try {
