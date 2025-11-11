@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../services/database_service.dart';
+import '../services/api_service.dart';
 import '../models/manutencao_model.dart';
 import '../theme/app_theme.dart';
 
@@ -13,7 +13,6 @@ class ManutencoesScreen extends StatefulWidget {
 
 class _ManutencoesScreenState extends State<ManutencoesScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final DatabaseService _db = DatabaseService.instance;
   final _formKey = GlobalKey<FormState>();
   
   final _valorController = TextEditingController();
@@ -44,39 +43,58 @@ class _ManutencoesScreenState extends State<ManutencoesScreen> with SingleTicker
   }
 
   Future<void> _loadTipos() async {
-    _tiposManutencao = await _db.getTiposManutencao();
-    if (_tiposManutencao.isNotEmpty) {
-      _selectedTipo = _tiposManutencao.first;
+    final response = await ApiService.getTiposManutencao();
+    if (response.success && response.data != null) {
+      final tipos = (response.data!['tipos_manutencao'] as List<dynamic>)
+          .map((t) => t['nome'] as String)
+          .toList();
+      _tiposManutencao = tipos;
+      if (_tiposManutencao.isNotEmpty) {
+        _selectedTipo = _tiposManutencao.first;
+      }
+      setState(() {});
     }
-    setState(() {});
   }
 
   Future<void> _loadManutencoes() async {
     setState(() => _isLoading = true);
-    _manutencoes = await _db.getManutencoes();
+    
+    final response = await ApiService.getManutencoes();
+    if (response.success && response.data != null) {
+      final list = response.data!['manutencoes'] as List<dynamic>;
+      _manutencoes = list.map((m) => ManutencaoModel.fromMap(m)).toList();
+    }
+    
     setState(() => _isLoading = false);
   }
 
   Future<void> _saveManutencao() async {
     if (_formKey.currentState!.validate()) {
-      final manutencao = ManutencaoModel(
-        data: _selectedDate,
-        tipo: _selectedTipo,
-        valor: double.parse(_valorController.text),
-        kmAtual: double.parse(_kmController.text),
-        descricao: _descricaoController.text,
-        dataRegistro: DateTime.now(),
-      );
+      final manutencaoMap = {
+        'data': _selectedDate.toIso8601String(),
+        'tipo': _selectedTipo,
+        'valor': double.parse(_valorController.text),
+        'km_atual': double.parse(_kmController.text),
+        'descricao': _descricaoController.text,
+        'data_registro': DateTime.now().toIso8601String(),
+      };
 
-      await _db.insertManutencao(manutencao);
+      final response = await ApiService.createManutencao(manutencaoMap);
       
-      _clearForm();
-      _loadManutencoes();
-      
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Manutenção salva com sucesso!')),
-      );
+      if (response.success) {
+        _clearForm();
+        _loadManutencoes();
+        
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Manutenção salva com sucesso!')),
+        );
+      } else {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro: ${response.message}')),
+        );
+      }
     }
   }
 
@@ -91,12 +109,20 @@ class _ManutencoesScreenState extends State<ManutencoesScreen> with SingleTicker
   }
 
   Future<void> _deleteManutencao(String id) async {
-    await _db.deleteManutencao(id);
-    _loadManutencoes();
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Manutenção excluída com sucesso!')),
-    );
+    final response = await ApiService.deleteManutencao(id);
+    
+    if (response.success) {
+      _loadManutencoes();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Manutenção excluída com sucesso!')),
+      );
+    } else {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro: ${response.message}')),
+      );
+    }
   }
 
 
@@ -555,7 +581,7 @@ class _ManutencoesScreenState extends State<ManutencoesScreen> with SingleTicker
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              if (manutencao.id != null) _deleteManutencao(manutencao.id!);
+              if (manutencao.id != null) _deleteManutencao(manutencao.id.toString());
             },
             child: const Text('Excluir', style: TextStyle(color: Colors.red)),
           ),
