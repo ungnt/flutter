@@ -49,91 +49,104 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadDashboardData() async {
     setState(() => isLoading = true);
     
-    final hoje = DateTime.now();
-    final inicioHoje = DateTime(hoje.year, hoje.month, hoje.day);
-    final fimHoje = DateTime(hoje.year, hoje.month, hoje.day, 23, 59, 59);
-    final inicioMes = DateTime(hoje.year, hoje.month, 1);
-    final fimMes = DateTime(hoje.year, hoje.month + 1, 0, 23, 59, 59);
+    try {
+      final hoje = DateTime.now();
+      final inicioHoje = DateTime(hoje.year, hoje.month, hoje.day);
+      final fimHoje = DateTime(hoje.year, hoje.month, hoje.day, 23, 59, 59);
+      final inicioMes = DateTime(hoje.year, hoje.month, 1);
+      final fimMes = DateTime(hoje.year, hoje.month + 1, 0, 23, 59, 59);
+      
+      // Dados de hoje
+      final responseTrabHoje = await ApiService.getTrabalhos(dataInicio: inicioHoje, dataFim: fimHoje);
+      final responseGastosHoje = await ApiService.getGastos(dataInicio: inicioHoje, dataFim: fimHoje);
+      final responseManuHoje = await ApiService.getManutencoes(dataInicio: inicioHoje, dataFim: fimHoje);
+      
+      // Dados do mês
+      final responseTrabMes = await ApiService.getTrabalhos(dataInicio: inicioMes, dataFim: fimMes);
+      final responseGastosMes = await ApiService.getGastos(dataInicio: inicioMes, dataFim: fimMes);
+      final responseManuMes = await ApiService.getManutencoes(dataInicio: inicioMes, dataFim: fimMes);
+      
+      // Trabalhos de hoje
+      List<TrabalhoModel> trabalhosHoje = [];
+      if (responseTrabHoje.success && responseTrabHoje.data != null) {
+        final list = responseTrabHoje.data!['trabalhos'] as List<dynamic>;
+        trabalhosHoje = list.map((t) => TrabalhoModel.fromMap(t)).toList();
+      }
+      
+      // Gastos de hoje
+      List<GastoModel> gastosHoje = [];
+      if (responseGastosHoje.success && responseGastosHoje.data != null) {
+        final list = responseGastosHoje.data!['gastos'] as List<dynamic>;
+        gastosHoje = list.map((g) => GastoModel.fromMap(g)).toList();
+      }
+      
+      // Manutenções de hoje
+      List<ManutencaoModel> manutencoesHoje = [];
+      if (responseManuHoje.success && responseManuHoje.data != null) {
+        final list = responseManuHoje.data!['manutencoes'] as List<dynamic>;
+        manutencoesHoje = list.map((m) => ManutencaoModel.fromMap(m)).toList();
+      }
+      
+      // Trabalhos do mês
+      List<TrabalhoModel> trabalhosMes = [];
+      if (responseTrabMes.success && responseTrabMes.data != null) {
+        final list = responseTrabMes.data!['trabalhos'] as List<dynamic>;
+        trabalhosMes = list.map((t) => TrabalhoModel.fromMap(t)).toList();
+      }
+      
+      // Gastos do mês
+      List<GastoModel> gastosMes = [];
+      if (responseGastosMes.success && responseGastosMes.data != null) {
+        final list = responseGastosMes.data!['gastos'] as List<dynamic>;
+        gastosMes = list.map((g) => GastoModel.fromMap(g)).toList();
+      }
+      
+      // Manutenções do mês
+      List<ManutencaoModel> manutencoesMes = [];
+      if (responseManuMes.success && responseManuMes.data != null) {
+        final list = responseManuMes.data!['manutencoes'] as List<dynamic>;
+        manutencoesMes = list.map((m) => ManutencaoModel.fromMap(m)).toList();
+      }
+      
+      // Calcular totais
+      final ganhosHoje = trabalhosHoje.fold(0.0, (sum, t) => sum + t.ganhos);
+      final gastosHojeTotal = gastosHoje.fold(0.0, (sum, g) => sum + g.valor);
+      final manutencoesHojeTotal = manutencoesHoje.fold(0.0, (sum, m) => sum + m.valor);
+      
+      final ganhosMes = trabalhosMes.fold(0.0, (sum, t) => sum + t.ganhos);
+      final gastosMesTotal = gastosMes.fold(0.0, (sum, g) => sum + g.valor);
+      final manutencoesMesTotal = manutencoesMes.fold(0.0, (sum, m) => sum + m.valor);
+      
+      dadosHoje = {
+        'ganhos': ganhosHoje,
+        'gastos': gastosHojeTotal,
+        'manutencoes': manutencoesHojeTotal,
+        'liquido': ganhosHoje - gastosHojeTotal - manutencoesHojeTotal,
+      };
+      
+      dadosMes = {
+        'ganhos': ganhosMes,
+        'gastos': gastosMesTotal,
+        'manutencoes': manutencoesMesTotal,
+        'liquido': ganhosMes - gastosMesTotal - manutencoesMesTotal,
+      };
     
-    // Dados de hoje
-    final responseTrabHoje = await ApiService.getTrabalhos(dataInicio: inicioHoje, dataFim: fimHoje);
-    final responseGastosHoje = await ApiService.getGastos(dataInicio: inicioHoje, dataFim: fimHoje);
-    final responseManuHoje = await ApiService.getManutencoes(dataInicio: inicioHoje, dataFim: fimHoje);
-    
-    // Dados do mês
-    final responseTrabMes = await ApiService.getTrabalhos(dataInicio: inicioMes, dataFim: fimMes);
-    final responseGastosMes = await ApiService.getGastos(dataInicio: inicioMes, dataFim: fimMes);
-    final responseManuMes = await ApiService.getManutencoes(dataInicio: inicioMes, dataFim: fimMes);
-    
-    // Trabalhos de hoje
-    List<TrabalhoModel> trabalhosHoje = [];
-    if (responseTrabHoje.success && responseTrabHoje.data != null) {
-      final list = responseTrabHoje.data!['trabalhos'] as List<dynamic>;
-      trabalhosHoje = list.map((t) => TrabalhoModel.fromMap(t)).toList();
+      // Últimos registros (últimos 10 do mês)
+      ultimosRegistros = _getUltimosRegistros(trabalhosMes, gastosMes, manutencoesMes);
+      
+      setState(() => isLoading = false);
+    } catch (e) {
+      print('Erro ao carregar dados do dashboard: $e');
+      setState(() => isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao carregar dados: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
-    
-    // Gastos de hoje
-    List<GastoModel> gastosHoje = [];
-    if (responseGastosHoje.success && responseGastosHoje.data != null) {
-      final list = responseGastosHoje.data!['gastos'] as List<dynamic>;
-      gastosHoje = list.map((g) => GastoModel.fromMap(g)).toList();
-    }
-    
-    // Manutenções de hoje
-    List<ManutencaoModel> manutencoesHoje = [];
-    if (responseManuHoje.success && responseManuHoje.data != null) {
-      final list = responseManuHoje.data!['manutencoes'] as List<dynamic>;
-      manutencoesHoje = list.map((m) => ManutencaoModel.fromMap(m)).toList();
-    }
-    
-    // Trabalhos do mês
-    List<TrabalhoModel> trabalhosMes = [];
-    if (responseTrabMes.success && responseTrabMes.data != null) {
-      final list = responseTrabMes.data!['trabalhos'] as List<dynamic>;
-      trabalhosMes = list.map((t) => TrabalhoModel.fromMap(t)).toList();
-    }
-    
-    // Gastos do mês
-    List<GastoModel> gastosMes = [];
-    if (responseGastosMes.success && responseGastosMes.data != null) {
-      final list = responseGastosMes.data!['gastos'] as List<dynamic>;
-      gastosMes = list.map((g) => GastoModel.fromMap(g)).toList();
-    }
-    
-    // Manutenções do mês
-    List<ManutencaoModel> manutencoesMes = [];
-    if (responseManuMes.success && responseManuMes.data != null) {
-      final list = responseManuMes.data!['manutencoes'] as List<dynamic>;
-      manutencoesMes = list.map((m) => ManutencaoModel.fromMap(m)).toList();
-    }
-    
-    // Calcular totais
-    final ganhosHoje = trabalhosHoje.fold(0.0, (sum, t) => sum + t.ganhos);
-    final gastosHojeTotal = gastosHoje.fold(0.0, (sum, g) => sum + g.valor);
-    final manutencoesHojeTotal = manutencoesHoje.fold(0.0, (sum, m) => sum + m.valor);
-    
-    final ganhosMes = trabalhosMes.fold(0.0, (sum, t) => sum + t.ganhos);
-    final gastosMesTotal = gastosMes.fold(0.0, (sum, g) => sum + g.valor);
-    final manutencoesMesTotal = manutencoesMes.fold(0.0, (sum, m) => sum + m.valor);
-    
-    dadosHoje = {
-      'ganhos': ganhosHoje,
-      'gastos': gastosHojeTotal,
-      'manutencoes': manutencoesHojeTotal,
-      'liquido': ganhosHoje - gastosHojeTotal - manutencoesHojeTotal,
-    };
-    
-    dadosMes = {
-      'ganhos': ganhosMes,
-      'gastos': gastosMesTotal,
-      'manutencoes': manutencoesMesTotal,
-      'liquido': ganhosMes - gastosMesTotal - manutencoesMesTotal,
-    };
-    
-    // Últimos registros (últimos 10 do mês)
-    ultimosRegistros = _getUltimosRegistros(trabalhosMes, gastosMes, manutencoesMes);
-    
-    setState(() => isLoading = false);
   }
 
   List<Map<String, dynamic>> _getUltimosRegistros(
