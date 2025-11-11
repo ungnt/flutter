@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../services/database_service.dart';
+import '../services/api_service.dart';
 import '../models/trabalho_model.dart';
 import '../theme/app_theme.dart';
 
@@ -13,7 +13,6 @@ class TrabalhoScreen extends StatefulWidget {
 
 class _TrabalhoScreenState extends State<TrabalhoScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final DatabaseService _db = DatabaseService.instance;
   final _formKey = GlobalKey<FormState>();
   
   final _ganhosController = TextEditingController();
@@ -44,30 +43,41 @@ class _TrabalhoScreenState extends State<TrabalhoScreen> with SingleTickerProvid
 
   Future<void> _loadTrabalhos() async {
     setState(() => _isLoading = true);
-    _trabalhos = await _db.getTrabalhos();
+    final response = await ApiService.getTrabalhos();
+    if (response.success && response.data != null) {
+      final trabalhosList = response.data!['trabalhos'] as List<dynamic>;
+      _trabalhos = trabalhosList.map((t) => TrabalhoModel.fromMap(t)).toList();
+    }
     setState(() => _isLoading = false);
   }
 
   Future<void> _saveTrabalho() async {
     if (_formKey.currentState!.validate()) {
-      final trabalho = TrabalhoModel(
-        data: _selectedDate,
-        ganhos: double.parse(_ganhosController.text),
-        km: double.parse(_kmController.text),
-        horas: double.parse(_horasController.text),
-        observacoes: _observacoesController.text,
-        dataRegistro: DateTime.now(),
-      );
+      final trabalhoData = {
+        'data': _selectedDate.toIso8601String(),
+        'ganhos': double.parse(_ganhosController.text),
+        'km': double.parse(_kmController.text),
+        'horas': double.parse(_horasController.text),
+        'observacoes': _observacoesController.text,
+        'data_registro': DateTime.now().toIso8601String(),
+      };
 
-      await _db.insertTrabalho(trabalho);
+      final response = await ApiService.createTrabalho(trabalhoData);
       
-      _clearForm();
-      _loadTrabalhos();
-      
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registro salvo com sucesso!')),
-      );
+      if (response.success) {
+        _clearForm();
+        await _loadTrabalhos();
+        
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registro salvo com sucesso!')),
+        );
+      } else {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response.message)),
+        );
+      }
     }
   }
 
@@ -79,13 +89,20 @@ class _TrabalhoScreenState extends State<TrabalhoScreen> with SingleTickerProvid
     _selectedDate = DateTime.now();
   }
 
-  Future<void> _deleteTrabalho(int id) async {
-    await _db.deleteTrabalho(id);
-    _loadTrabalhos();
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Registro excluído com sucesso!')),
-    );
+  Future<void> _deleteTrabalho(String id) async {
+    final response = await ApiService.deleteTrabalho(id);
+    if (response.success) {
+      await _loadTrabalhos();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Registro excluído com sucesso!')),
+      );
+    } else {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response.message)),
+      );
+    }
   }
 
   @override
@@ -465,7 +482,7 @@ class _TrabalhoScreenState extends State<TrabalhoScreen> with SingleTickerProvid
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              _deleteTrabalho(trabalho.id!);
+              _deleteTrabalho(trabalho.id.toString());
             },
             child: const Text('Excluir', style: TextStyle(color: Colors.red)),
           ),
