@@ -1,5 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:motouber/services/database_service.dart';
+import 'api_service.dart';
+import '../models/trabalho_model.dart';
+import '../models/gasto_model.dart';
 
 class GoalsService {
   static const String _dailyGoalKey = 'daily_goal';
@@ -45,8 +47,10 @@ class GoalsService {
     final startOfDay = DateTime(today.year, today.month, today.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
-    final db = DatabaseService.instance;
-    final trabalhos = await db.getTrabalhosByPeriod(startOfDay, endOfDay);
+    final response = await ApiService.getTrabalhos(dataInicio: startOfDay, dataFim: endOfDay);
+    final trabalhos = response.success && response.data?['trabalhos'] != null
+        ? (response.data!['trabalhos'] as List).map((t) => TrabalhoModel.fromJson(t)).toList()
+        : <TrabalhoModel>[];
     
     final atual = trabalhos.fold<double>(0, (sum, t) => sum + t.ganhos);
     final progresso = goal > 0 ? (atual / goal) * 100 : 0.0;
@@ -66,8 +70,10 @@ class GoalsService {
     final startOfMonth = DateTime(now.year, now.month, 1);
     final endOfMonth = DateTime(now.year, now.month + 1, 1);
 
-    final db = DatabaseService.instance;
-    final trabalhos = await db.getTrabalhosByPeriod(startOfMonth, endOfMonth);
+    final response = await ApiService.getTrabalhos(dataInicio: startOfMonth, dataFim: endOfMonth);
+    final trabalhos = response.success && response.data?['trabalhos'] != null
+        ? (response.data!['trabalhos'] as List).map((t) => TrabalhoModel.fromJson(t)).toList()
+        : <TrabalhoModel>[];
     
     final atual = trabalhos.fold<double>(0, (sum, t) => sum + t.ganhos);
     final progresso = goal > 0 ? (atual / goal) * 100 : 0.0;
@@ -87,9 +93,15 @@ class GoalsService {
     final startOfMonth = DateTime(now.year, now.month, 1);
     final endOfMonth = DateTime(now.year, now.month + 1, 1);
 
-    final db = DatabaseService.instance;
-    final trabalhos = await db.getTrabalhosByPeriod(startOfMonth, endOfMonth);
-    final gastos = await db.getGastosByPeriod(startOfMonth, endOfMonth);
+    final trabalhosResponse = await ApiService.getTrabalhos(dataInicio: startOfMonth, dataFim: endOfMonth);
+    final trabalhos = trabalhosResponse.success && trabalhosResponse.data?['trabalhos'] != null
+        ? (trabalhosResponse.data!['trabalhos'] as List).map((t) => TrabalhoModel.fromJson(t)).toList()
+        : <TrabalhoModel>[];
+    
+    final gastosResponse = await ApiService.getGastos(dataInicio: startOfMonth, dataFim: endOfMonth);
+    final gastos = gastosResponse.success && gastosResponse.data?['gastos'] != null
+        ? (gastosResponse.data!['gastos'] as List).map((g) => GastoModel.fromJson(g)).toList()
+        : <GastoModel>[];
 
     final totalKm = trabalhos.fold<double>(0, (sum, t) => sum + t.km);
     final gastoCombustivel = gastos
@@ -138,16 +150,19 @@ class GoalsService {
     final now = DateTime.now();
     final startOfMonth = DateTime(now.year, now.month, 1);
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-
-    final db = DatabaseService.instance;
     
     // Trabalhos da semana
-    final weekWork = await db.getTrabalhosByPeriod(startOfWeek, now.add(const Duration(days: 1)));
+    final weekResponse = await ApiService.getTrabalhos(dataInicio: startOfWeek, dataFim: now.add(const Duration(days: 1)));
+    final weekWork = weekResponse.success && weekResponse.data?['trabalhos'] != null
+        ? (weekResponse.data!['trabalhos'] as List).map((t) => TrabalhoModel.fromJson(t)).toList()
+        : <TrabalhoModel>[];
     final weekEarnings = weekWork.fold<double>(0, (sum, t) => sum + t.ganhos);
 
     // Trabalhos do mês
-    final monthWork = await db.getTrabalhosByPeriod(startOfMonth, DateTime(now.year, now.month + 1, 1));
-    final monthEarnings = monthWork.fold<double>(0, (sum, t) => sum + t.ganhos);
+    final monthResponse = await ApiService.getTrabalhos(dataInicio: startOfMonth, dataFim: DateTime(now.year, now.month + 1, 1));
+    final monthWork = monthResponse.success && monthResponse.data?['trabalhos'] != null
+        ? (monthResponse.data!['trabalhos'] as List).map((t) => TrabalhoModel.fromJson(t)).toList()
+        : <TrabalhoModel>[];
 
     // Melhor dia do mês
     final bestDay = monthWork.isNotEmpty 

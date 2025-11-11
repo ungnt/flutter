@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import '../services/database_service.dart';
+import '../services/api_service.dart';
+import '../models/trabalho_model.dart';
+import '../models/gasto_model.dart';
 
 class FinancialChart extends StatelessWidget {
   final String period; // 'dias', 'meses', 'anos'
@@ -81,7 +83,6 @@ class FinancialChart extends StatelessWidget {
   }
 
   Future<List<BarChartGroupData>> _getChartData() async {
-    final db = DatabaseService.instance;
     final now = DateTime.now();
     List<BarChartGroupData> chartData = [];
 
@@ -90,9 +91,22 @@ class FinancialChart extends StatelessWidget {
         // Últimos 7 dias
         for (int i = 6; i >= 0; i--) {
           final date = now.subtract(Duration(days: i));
-          final ganhos = await db.getGanhosByDate(date);
-          final gastos = await db.getGastosByDate(date);
-          final liquido = ganhos - gastos;
+          final startOfDay = DateTime(date.year, date.month, date.day);
+          final endOfDay = startOfDay.add(const Duration(days: 1));
+          
+          final trabalhosResp = await ApiService.getTrabalhos(dataInicio: startOfDay, dataFim: endOfDay);
+          final trabalhos = trabalhosResp.success && trabalhosResp.data?['trabalhos'] != null
+              ? (trabalhosResp.data!['trabalhos'] as List).map((t) => TrabalhoModel.fromJson(t)).toList()
+              : <TrabalhoModel>[];
+          
+          final gastosResp = await ApiService.getGastos(dataInicio: startOfDay, dataFim: endOfDay);
+          final gastos = gastosResp.success && gastosResp.data?['gastos'] != null
+              ? (gastosResp.data!['gastos'] as List).map((g) => GastoModel.fromJson(g)).toList()
+              : <GastoModel>[];
+          
+          final ganhos = trabalhos.fold<double>(0, (sum, t) => sum + t.ganhos);
+          final gastoTotal = gastos.fold<double>(0, (sum, g) => sum + g.valor);
+          final liquido = ganhos - gastoTotal;
           
           chartData.add(BarChartGroupData(
             x: i,
@@ -112,9 +126,21 @@ class FinancialChart extends StatelessWidget {
         // Últimos 6 meses
         for (int i = 5; i >= 0; i--) {
           final date = DateTime(now.year, now.month - i, 1);
-          final ganhos = await db.getGanhosByMonth(date.year, date.month);
-          final gastos = await db.getGastosByMonth(date.year, date.month);
-          final liquido = ganhos - gastos;
+          final endOfMonth = DateTime(date.year, date.month + 1, 1);
+          
+          final trabalhosResp = await ApiService.getTrabalhos(dataInicio: date, dataFim: endOfMonth);
+          final trabalhos = trabalhosResp.success && trabalhosResp.data?['trabalhos'] != null
+              ? (trabalhosResp.data!['trabalhos'] as List).map((t) => TrabalhoModel.fromJson(t)).toList()
+              : <TrabalhoModel>[];
+          
+          final gastosResp = await ApiService.getGastos(dataInicio: date, dataFim: endOfMonth);
+          final gastos = gastosResp.success && gastosResp.data?['gastos'] != null
+              ? (gastosResp.data!['gastos'] as List).map((g) => GastoModel.fromJson(g)).toList()
+              : <GastoModel>[];
+          
+          final ganhos = trabalhos.fold<double>(0, (sum, t) => sum + t.ganhos);
+          final gastoTotal = gastos.fold<double>(0, (sum, g) => sum + g.valor);
+          final liquido = ganhos - gastoTotal;
           
           chartData.add(BarChartGroupData(
             x: i,
@@ -134,9 +160,22 @@ class FinancialChart extends StatelessWidget {
         // Últimos 3 anos
         for (int i = 2; i >= 0; i--) {
           final year = now.year - i;
-          final ganhos = await db.getGanhosByYear(year);
-          final gastos = await db.getGastosByYear(year);
-          final liquido = ganhos - gastos;
+          final startOfYear = DateTime(year, 1, 1);
+          final endOfYear = DateTime(year + 1, 1, 1);
+          
+          final trabalhosResp = await ApiService.getTrabalhos(dataInicio: startOfYear, dataFim: endOfYear);
+          final trabalhos = trabalhosResp.success && trabalhosResp.data?['trabalhos'] != null
+              ? (trabalhosResp.data!['trabalhos'] as List).map((t) => TrabalhoModel.fromJson(t)).toList()
+              : <TrabalhoModel>[];
+          
+          final gastosResp = await ApiService.getGastos(dataInicio: startOfYear, dataFim: endOfYear);
+          final gastos = gastosResp.success && gastosResp.data?['gastos'] != null
+              ? (gastosResp.data!['gastos'] as List).map((g) => GastoModel.fromJson(g)).toList()
+              : <GastoModel>[];
+          
+          final ganhos = trabalhos.fold<double>(0, (sum, t) => sum + t.ganhos);
+          final gastoTotal = gastos.fold<double>(0, (sum, g) => sum + g.valor);
+          final liquido = ganhos - gastoTotal;
           
           chartData.add(BarChartGroupData(
             x: i,

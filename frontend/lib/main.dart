@@ -8,7 +8,6 @@ import 'screens/goals_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/backend_config_screen.dart';
-import 'services/database_service.dart';
 import 'services/theme_service.dart';
 import 'services/backend_config_service.dart';
 import 'services/auth_service.dart';
@@ -19,9 +18,6 @@ void main() async {
 
   // Inicializar serviços de configuração do backend
   await BackendConfigService.instance.initialize();
-
-  // Inicializar banco de dados
-  await DatabaseService.instance.initDatabase();
 
   // Inicializar serviços
   final themeService = ThemeService();
