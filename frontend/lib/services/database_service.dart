@@ -154,6 +154,62 @@ class DatabaseService {
       await _insertDefaultCategories(db);
       await _insertDefaultTiposManutencao(db);
     }
+
+    // Migração v3 → v4: Adicionar dual-ID system (remote_id, user_id, updated_at)
+    if (oldVersion < 4) {
+      await db.transaction((txn) async {
+        // Verificar se as tabelas existem e adicionar colunas necessárias
+        
+        // Tabela trabalho
+        final trabalhoColumns = await txn.rawQuery('PRAGMA table_info(trabalho)');
+        final hasLocalId = trabalhoColumns.any((col) => col['name'] == 'local_id');
+        final hasRemoteId = trabalhoColumns.any((col) => col['name'] == 'remote_id');
+        
+        if (!hasLocalId) {
+          // Renomear id para local_id
+          await txn.execute('ALTER TABLE trabalho RENAME COLUMN id TO local_id');
+        }
+        
+        if (!hasRemoteId) {
+          await txn.execute('ALTER TABLE trabalho ADD COLUMN remote_id TEXT');
+          await txn.execute('ALTER TABLE trabalho ADD COLUMN user_id TEXT');
+          await txn.execute('ALTER TABLE trabalho ADD COLUMN updated_at TEXT');
+          await txn.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_trabalho_remote_id ON trabalho(remote_id)');
+        }
+
+        // Tabela gastos
+        final gastosColumns = await txn.rawQuery('PRAGMA table_info(gastos)');
+        final gastosHasLocalId = gastosColumns.any((col) => col['name'] == 'local_id');
+        final gastosHasRemoteId = gastosColumns.any((col) => col['name'] == 'remote_id');
+        
+        if (!gastosHasLocalId) {
+          await txn.execute('ALTER TABLE gastos RENAME COLUMN id TO local_id');
+        }
+        
+        if (!gastosHasRemoteId) {
+          await txn.execute('ALTER TABLE gastos ADD COLUMN remote_id TEXT');
+          await txn.execute('ALTER TABLE gastos ADD COLUMN user_id TEXT');
+          await txn.execute('ALTER TABLE gastos ADD COLUMN updated_at TEXT');
+          await txn.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_gastos_remote_id ON gastos(remote_id)');
+        }
+
+        // Tabela manutencao
+        final manutencaoColumns = await txn.rawQuery('PRAGMA table_info(manutencao)');
+        final manutencaoHasLocalId = manutencaoColumns.any((col) => col['name'] == 'local_id');
+        final manutencaoHasRemoteId = manutencaoColumns.any((col) => col['name'] == 'remote_id');
+        
+        if (!manutencaoHasLocalId) {
+          await txn.execute('ALTER TABLE manutencao RENAME COLUMN id TO local_id');
+        }
+        
+        if (!manutencaoHasRemoteId) {
+          await txn.execute('ALTER TABLE manutencao ADD COLUMN remote_id TEXT');
+          await txn.execute('ALTER TABLE manutencao ADD COLUMN user_id TEXT');
+          await txn.execute('ALTER TABLE manutencao ADD COLUMN updated_at TEXT');
+          await txn.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_manutencao_remote_id ON manutencao(remote_id)');
+        }
+      });
+    }
   }
 
   Future<void> _insertDefaultIntervals(Database db) async {

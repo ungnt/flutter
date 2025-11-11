@@ -1,7 +1,5 @@
-import 'dart:convert';
-
-import 'package:shared_preferences/shared_preferences.dart';
 import 'database_service.dart';
+import 'local_session_service.dart';
 
 /// Estados de sincronização
 enum SyncStatus {
@@ -28,71 +26,58 @@ class SyncResult {
   });
 }
 
+/// Serviço de autenticação que delega gerenciamento de sessão para LocalSessionService
 class AuthService {
-  static const String _tokenKey = 'auth_token';
-  static const String _userKey = 'user_data';
+  static final _sessionService = LocalSessionService.instance;
 
   /// Obter token de autenticação armazenado
   static Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
+    return _sessionService.getToken();
   }
 
   /// Alias para compatibilidade com sync_service
   static Future<String?> getStoredToken() async {
-    return getToken();
+    return _sessionService.getToken();
   }
 
   /// Armazenar token de autenticação
   static Future<void> setToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token);
-  }
-
-  /// Remover token (logout)
-  static Future<void> clearToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
-    await prefs.remove(_userKey);
+    return _sessionService.setToken(token);
   }
 
   /// Verificar se usuário está autenticado
   static Future<bool> isAuthenticated() async {
-    final token = await getToken();
-    return token != null && token.isNotEmpty;
+    return _sessionService.isAuthenticated();
   }
 
-  /// Fazer logout (limpar dados locais e tokens)
+  /// Fazer logout (limpar dados locais, tokens e banco de dados)
   static Future<void> logout() async {
-    await clearToken();
+    await _sessionService.clearSession();
     await DatabaseService.instance.clearAllData();
   }
 
   /// Obter email do usuário logado
   static Future<String?> getUserEmail() async {
-    final userData = await getUserData();
-    return userData?['email'];
+    return _sessionService.getUserEmail();
   }
 
   /// Obter nome do usuário logado
   static Future<String?> getUserName() async {
-    final userData = await getUserData();
-    return userData?['name'];
+    return _sessionService.getUserName();
+  }
+
+  /// Obter ID do usuário logado
+  static Future<String?> getUserId() async {
+    return _sessionService.getUserId();
   }
 
   /// Obter dados do usuário armazenados
   static Future<Map<String, dynamic>?> getUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userData = prefs.getString(_userKey);
-    if (userData != null) {
-      return json.decode(userData);
-    }
-    return null;
+    return _sessionService.getUserData();
   }
 
   /// Armazenar dados do usuário
   static Future<void> setUserData(Map<String, dynamic> userData) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_userKey, json.encode(userData));
+    return _sessionService.setUserData(userData);
   }
 }

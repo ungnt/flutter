@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'backend_config_service.dart';
+import 'local_session_service.dart';
 import 'sync_service.dart';
 
 class ApiService {
@@ -10,8 +10,7 @@ class ApiService {
   static String _getEndpointUrl(String endpoint) => BackendConfigService.instance.getEndpointUrl(endpoint);
   static Duration get _timeout => BackendConfigService.instance.getTimeout();
   
-  static const String _tokenKey = 'auth_token';
-  static const String _userKey = 'user_data';
+  static final _sessionService = LocalSessionService.instance;
 
   // Headers padrão
   static Map<String, String> get _defaultHeaders => {
@@ -21,53 +20,41 @@ class ApiService {
 
   // Headers com autorização
   static Future<Map<String, String>> get _authHeaders async {
-    final token = await getToken();
+    final token = await _sessionService.getToken();
     return {
       ..._defaultHeaders,
       if (token != null) 'Authorization': 'Bearer $token',
     };
   }
 
-  // Gerenciamento de token
+  // Gerenciamento de token (delegado ao LocalSessionService)
   static Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
+    return _sessionService.getToken();
   }
 
   static Future<void> saveToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token);
+    return _sessionService.setToken(token);
   }
 
   static Future<void> removeToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
-    await prefs.remove(_userKey);
+    return _sessionService.clearSession();
   }
 
   static Future<bool> isLoggedIn() async {
-    final token = await getToken();
-    return token != null && token.isNotEmpty;
+    return _sessionService.isAuthenticated();
   }
 
-  // Gerenciamento de usuário
+  // Gerenciamento de usuário (delegado ao LocalSessionService)
   static Future<Map<String, dynamic>?> getUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userJson = prefs.getString(_userKey);
-    if (userJson != null) {
-      return jsonDecode(userJson) as Map<String, dynamic>;
-    }
-    return null;
+    return _sessionService.getUserData();
   }
 
   static Future<void> saveUserData(Map<String, dynamic> userData) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_userKey, jsonEncode(userData));
+    return _sessionService.setUserData(userData);
   }
 
   static Future<void> clearUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_userKey);
+    return _sessionService.clearSession();
   }
 
   // Autenticação
