@@ -8,10 +8,22 @@
         android:label="Motouber"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:resizeableActivity="true">
+        android:resizeableActivity="true"
+        android:supportsRtl="true">
 
+        <!-- Suporte Multi-Window Samsung -->
         <meta-data 
             android:name="com.sec.android.support.multiwindow" 
+            android:value="true" />
+        
+        <!-- Suporte Multi-Instance Samsung -->
+        <meta-data 
+            android:name="com.samsung.android.sdk.multiwindow.multiinstance.enable" 
+            android:value="true" />
+        
+        <!-- Suporte PenWindow Samsung -->
+        <meta-data 
+            android:name="com.samsung.android.sdk.multiwindow.penwindow.enable" 
             android:value="true" />
 
         <activity
@@ -22,7 +34,8 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize"
-            android:resizeableActivity="true">
+            android:resizeableActivity="true"
+            android:supportsPictureInPicture="true">
 
             <layout
                 android:minWidth="220dp"
