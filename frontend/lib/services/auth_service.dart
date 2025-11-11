@@ -50,10 +50,9 @@ class AuthService {
     return _sessionService.isAuthenticated();
   }
 
-  /// Fazer logout (limpar dados locais, tokens e banco de dados)
+  /// Fazer logout (limpar tokens e dados locais da sessão)
   static Future<void> logout() async {
     await _sessionService.clearSession();
-    await DatabaseService.instance.clearAllData();
   }
 
   /// Obter email do usuário logado
