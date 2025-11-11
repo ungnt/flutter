@@ -153,10 +153,24 @@ class ApiService {
     }
   }
 
-  static Future<ApiResponse> getTrabalhos() async {
+  static Future<ApiResponse> getTrabalhos({DateTime? dataInicio, DateTime? dataFim}) async {
     try {
+      var url = _getEndpointUrl('trabalho/');
+      final queryParams = <String, String>{};
+      
+      if (dataInicio != null) {
+        queryParams['data_inicio'] = dataInicio.toIso8601String();
+      }
+      if (dataFim != null) {
+        queryParams['data_fim'] = dataFim.toIso8601String();
+      }
+      
+      if (queryParams.isNotEmpty) {
+        url = '$url?${Uri(queryParameters: queryParams).query}';
+      }
+      
       final response = await http.get(
-        Uri.parse(_getEndpointUrl('trabalho/')),
+        Uri.parse(url),
         headers: await _authHeaders,
       ).timeout(_timeout);
 
@@ -219,10 +233,24 @@ class ApiService {
     }
   }
 
-  static Future<ApiResponse> getGastos() async {
+  static Future<ApiResponse> getGastos({DateTime? dataInicio, DateTime? dataFim}) async {
     try {
+      var url = _getEndpointUrl('gastos/');
+      final queryParams = <String, String>{};
+      
+      if (dataInicio != null) {
+        queryParams['data_inicio'] = dataInicio.toIso8601String();
+      }
+      if (dataFim != null) {
+        queryParams['data_fim'] = dataFim.toIso8601String();
+      }
+      
+      if (queryParams.isNotEmpty) {
+        url = '$url?${Uri(queryParameters: queryParams).query}';
+      }
+      
       final response = await http.get(
-        Uri.parse(_getEndpointUrl('gastos/')),
+        Uri.parse(url),
         headers: await _authHeaders,
       ).timeout(_timeout);
 
@@ -285,10 +313,24 @@ class ApiService {
     }
   }
 
-  static Future<ApiResponse> getManutencoes() async {
+  static Future<ApiResponse> getManutencoes({DateTime? dataInicio, DateTime? dataFim}) async {
     try {
+      var url = _getEndpointUrl('manutencao/');
+      final queryParams = <String, String>{};
+      
+      if (dataInicio != null) {
+        queryParams['data_inicio'] = dataInicio.toIso8601String();
+      }
+      if (dataFim != null) {
+        queryParams['data_fim'] = dataFim.toIso8601String();
+      }
+      
+      if (queryParams.isNotEmpty) {
+        url = '$url?${Uri(queryParameters: queryParams).query}';
+      }
+      
       final response = await http.get(
-        Uri.parse(_getEndpointUrl('manutencao/')),
+        Uri.parse(url),
         headers: await _authHeaders,
       ).timeout(_timeout);
 

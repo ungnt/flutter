@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../services/database_service.dart';
+import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
 import '../widgets/animated_counter.dart';
 import '../widgets/secret_gesture_detector.dart';
+import '../models/trabalho_model.dart';
+import '../models/gasto_model.dart';
+import '../models/manutencao_model.dart';
 import 'registro_integrado_screen.dart';
 import 'relatorios_screen.dart';
 import 'goals_screen.dart';
@@ -19,7 +22,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final DatabaseService _db = DatabaseService.instance;
   Map<String, double> dadosHoje = {};
   Map<String, double> dadosMes = {};
   List<Map<String, dynamic>> ultimosRegistros = [];
@@ -48,20 +50,62 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => isLoading = true);
     
     final hoje = DateTime.now();
-    final inicioMes = DateTime(hoje.year, hoje.month, 1);
-    final fimMes = DateTime(hoje.year, hoje.month + 1, 0);
-    
-    // Dados de hoje (início e fim do dia)
     final inicioHoje = DateTime(hoje.year, hoje.month, hoje.day);
     final fimHoje = DateTime(hoje.year, hoje.month, hoje.day, 23, 59, 59);
-    final trabalhosHoje = await _db.getTrabalhos(dataInicio: inicioHoje, dataFim: fimHoje);
-    final gastosHoje = await _db.getGastos(dataInicio: inicioHoje, dataFim: fimHoje);
-    final manutencoesHoje = await _db.getManutencoes(dataInicio: inicioHoje, dataFim: fimHoje);
+    final inicioMes = DateTime(hoje.year, hoje.month, 1);
+    final fimMes = DateTime(hoje.year, hoje.month + 1, 0, 23, 59, 59);
+    
+    // Dados de hoje
+    final responseTrabHoje = await ApiService.getTrabalhos(dataInicio: inicioHoje, dataFim: fimHoje);
+    final responseGastosHoje = await ApiService.getGastos(dataInicio: inicioHoje, dataFim: fimHoje);
+    final responseManuHoje = await ApiService.getManutencoes(dataInicio: inicioHoje, dataFim: fimHoje);
     
     // Dados do mês
-    final trabalhosMes = await _db.getTrabalhos(dataInicio: inicioMes, dataFim: fimMes);
-    final gastosMes = await _db.getGastos(dataInicio: inicioMes, dataFim: fimMes);
-    final manutencoesMes = await _db.getManutencoes(dataInicio: inicioMes, dataFim: fimMes);
+    final responseTrabMes = await ApiService.getTrabalhos(dataInicio: inicioMes, dataFim: fimMes);
+    final responseGastosMes = await ApiService.getGastos(dataInicio: inicioMes, dataFim: fimMes);
+    final responseManuMes = await ApiService.getManutencoes(dataInicio: inicioMes, dataFim: fimMes);
+    
+    // Trabalhos de hoje
+    List<TrabalhoModel> trabalhosHoje = [];
+    if (responseTrabHoje.success && responseTrabHoje.data != null) {
+      final list = responseTrabHoje.data!['trabalhos'] as List<dynamic>;
+      trabalhosHoje = list.map((t) => TrabalhoModel.fromMap(t)).toList();
+    }
+    
+    // Gastos de hoje
+    List<GastoModel> gastosHoje = [];
+    if (responseGastosHoje.success && responseGastosHoje.data != null) {
+      final list = responseGastosHoje.data!['gastos'] as List<dynamic>;
+      gastosHoje = list.map((g) => GastoModel.fromMap(g)).toList();
+    }
+    
+    // Manutenções de hoje
+    List<ManutencaoModel> manutencoesHoje = [];
+    if (responseManuHoje.success && responseManuHoje.data != null) {
+      final list = responseManuHoje.data!['manutencoes'] as List<dynamic>;
+      manutencoesHoje = list.map((m) => ManutencaoModel.fromMap(m)).toList();
+    }
+    
+    // Trabalhos do mês
+    List<TrabalhoModel> trabalhosMes = [];
+    if (responseTrabMes.success && responseTrabMes.data != null) {
+      final list = responseTrabMes.data!['trabalhos'] as List<dynamic>;
+      trabalhosMes = list.map((t) => TrabalhoModel.fromMap(t)).toList();
+    }
+    
+    // Gastos do mês
+    List<GastoModel> gastosMes = [];
+    if (responseGastosMes.success && responseGastosMes.data != null) {
+      final list = responseGastosMes.data!['gastos'] as List<dynamic>;
+      gastosMes = list.map((g) => GastoModel.fromMap(g)).toList();
+    }
+    
+    // Manutenções do mês
+    List<ManutencaoModel> manutencoesMes = [];
+    if (responseManuMes.success && responseManuMes.data != null) {
+      final list = responseManuMes.data!['manutencoes'] as List<dynamic>;
+      manutencoesMes = list.map((m) => ManutencaoModel.fromMap(m)).toList();
+    }
     
     // Calcular totais
     final ganhosHoje = trabalhosHoje.fold(0.0, (sum, t) => sum + t.ganhos);
@@ -86,20 +130,20 @@ class _HomeScreenState extends State<HomeScreen> {
       'liquido': ganhosMes - gastosMesTotal - manutencoesMesTotal,
     };
     
-    // Últimos registros
-    ultimosRegistros = await _getUltimosRegistros();
+    // Últimos registros (últimos 10 do mês)
+    ultimosRegistros = _getUltimosRegistros(trabalhosMes, gastosMes, manutencoesMes);
     
     setState(() => isLoading = false);
   }
 
-  Future<List<Map<String, dynamic>>> _getUltimosRegistros() async {
-    final trabalhos = await _db.getTrabalhos();
-    final gastos = await _db.getGastos();
-    final manutencoes = await _db.getManutencoes();
-    
+  List<Map<String, dynamic>> _getUltimosRegistros(
+    List<TrabalhoModel> trabalhos,
+    List<GastoModel> gastos,
+    List<ManutencaoModel> manutencoes,
+  ) {
     List<Map<String, dynamic>> registros = [];
     
-    for (var trabalho in trabalhos.take(5)) {
+    for (var trabalho in trabalhos) {
       registros.add({
         'tipo': 'trabalho',
         'data': trabalho.data,
@@ -110,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
     
-    for (var gasto in gastos.take(5)) {
+    for (var gasto in gastos) {
       registros.add({
         'tipo': 'gasto',
         'data': gasto.data,
@@ -121,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
     
-    for (var manutencao in manutencoes.take(5)) {
+    for (var manutencao in manutencoes) {
       registros.add({
         'tipo': 'manutencao',
         'data': manutencao.data,
