@@ -100,6 +100,12 @@ class DatabaseService {
 
     // Inserir intervalos padrão
     await _insertDefaultIntervals(db);
+    
+    // Inserir categorias de gastos padrão
+    await _insertDefaultCategories(db);
+    
+    // Inserir tipos de manutenção padrão
+    await _insertDefaultTiposManutencao(db);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -136,6 +142,8 @@ class DatabaseService {
         )
       ''');
       await _insertDefaultIntervals(db);
+      await _insertDefaultCategories(db);
+      await _insertDefaultTiposManutencao(db);
     }
   }
 
@@ -160,6 +168,48 @@ class DatabaseService {
         conflictAlgorithm: ConflictAlgorithm.ignore,
       );
     }
+  }
+
+  Future<void> _insertDefaultCategories(Database db) async {
+    final defaultCategories = [
+      'Combustível',
+      'Manutenção',
+      'Multas/IPVA',
+      'Alimentação',
+      'Equipamentos',
+      'Documentação',
+      'Pedágio',
+      'Estacionamento',
+      'Lavagem',
+      'Outros',
+    ];
+
+    await db.insert(
+      'config',
+      {'chave': 'categorias_gastos', 'valor': defaultCategories.join(',')},
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+  }
+
+  Future<void> _insertDefaultTiposManutencao(Database db) async {
+    final defaultTipos = [
+      'Troca de óleo',
+      'Revisão geral',
+      'Pneus',
+      'Freios',
+      'Filtros',
+      'Velas',
+      'Correia',
+      'Relação',
+      'Óleo de freio',
+      'Outros',
+    ];
+
+    await db.insert(
+      'config',
+      {'chave': 'tipos_manutencao', 'valor': defaultTipos.join(',')},
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
   }
 
   // Método initDatabase para compatibilidade com main.dart

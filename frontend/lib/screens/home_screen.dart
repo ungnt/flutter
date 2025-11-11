@@ -155,8 +155,6 @@ class _HomeScreenState extends State<HomeScreen> {
               onSelected: (value) {
                 if (value == 'logout') {
                   _handleLogout();
-                } else if (value == 'sync') {
-                  _navigateToSync();
                 }
               },
               itemBuilder: (context) => [
@@ -172,16 +170,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const PopupMenuDivider(),
-                const PopupMenuItem(
-                  value: 'sync',
-                  child: Row(
-                    children: [
-                      Icon(Icons.sync, size: 20),
-                      SizedBox(width: 8),
-                      Text('Sincronizar'),
-                    ],
-                  ),
-                ),
                 const PopupMenuItem(
                   value: 'logout',
                   child: Row(

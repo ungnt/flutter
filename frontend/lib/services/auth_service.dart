@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'database_service.dart';
 
 /// Estados de sincronização
 enum SyncStatus {
@@ -61,9 +62,10 @@ class AuthService {
     return token != null && token.isNotEmpty;
   }
 
-  /// Fazer logout (limpar dados)
+  /// Fazer logout (limpar dados locais e tokens)
   static Future<void> logout() async {
     await clearToken();
+    await DatabaseService.instance.clearAllData();
   }
 
   /// Obter email do usuário logado

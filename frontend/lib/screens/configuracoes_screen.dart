@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/database_service.dart';
 import '../services/theme_service.dart';
-import '../services/backup_service.dart';
-import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
 
@@ -27,7 +26,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _loadConfiguracoes();
   }
 
@@ -292,7 +291,6 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
           tabs: const [
             Tab(text: 'Geral'),
             Tab(text: 'Categorias'),
-            Tab(text: 'Backup'),
           ],
         ),
       ),
@@ -301,7 +299,6 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
         children: [
           _buildGeralTab(),
           _buildCategoriasTab(),
-          _buildBackupTab(),
         ],
       ),
     );
@@ -700,21 +697,49 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirmar Limpeza'),
-        content: const Text(
-          'Esta ação removerá todos os dados permanentemente. Tem certeza que deseja continuar?',
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: Colors.red, size: 28),
+            SizedBox(width: 8),
+            Text('ATENÇÃO'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Esta ação irá:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text('• Apagar TODOS os dados locais (trabalhos, gastos, manutenções)'),
+            Text('• Fazer logout da sua conta'),
+            Text('• Retornar à tela de login'),
+            SizedBox(height: 16),
+            Text(
+              'Esta ação NÃO pode ser desfeita!',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text('Deseja realmente continuar?'),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancelar'),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               _clearAllData();
             },
-            child: const Text('Limpar Dados', style: TextStyle(color: Colors.red)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('SIM, LIMPAR TUDO'),
           ),
         ],
       ),
@@ -723,17 +748,26 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
 
   Future<void> _clearAllData() async {
     try {
-      // Aqui você implementaria a limpeza do banco de dados
-      // Por exemplo, deletar todas as tabelas e recriar
-
+      await _db.clearAllData();
+      await AuthService.logout();
+      
       if (!context.mounted) return;
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Todos os dados foram removidos!')),
+        const SnackBar(
+          content: Text('✅ Todos os dados foram removidos!'),
+          backgroundColor: Colors.green,
+        ),
       );
+      
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao limpar dados: $e')),
+        SnackBar(
+          content: Text('❌ Erro ao limpar dados: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
