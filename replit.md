@@ -10,123 +10,19 @@
 
 5. **Flutter não roda aqui** - Projetos Flutter NÃO podem ser executados no Replit. Build é feito via Codemagic (usuário faz via `git add .` e `git push`)
 
-6. **Backend roda aqui** - Backend Dart/Shelf executa no Replit para análise e testes com banco de dados
+6. **Backend rodando separado**
 
-7. **SUPABASE NÃO VAI SER USADO** - usar banco de dados no backend 
-
-
+7. **SUPABASE NÃO VAI SER USADO** - 
 
 
 
 
 
 
-KM$ (Motora) - Aplicativo de Controle Financeiro
 
-## Visão Geral
-Aplicativo de controle financeiro desenvolvido em Flutter, voltado para motoristas de aplicativo e motociclistas. Oferece gestão completa de ganhos, gastos e manutenções do veículo, com funcionalidades de relatórios, metas, backup local/nuvem e sincronização multi-dispositivo.
 
-## Arquitetura
-- **Frontend**: Flutter (Android/iOS/Desktop)
-- **Backend**: Dart com Shelf framework (porta 5000)
-- **Banco de Dados**: SQLite no backend (km_dollar.db)
-- **Estratégia**: Login obrigatório + transmissão em tempo real + isolamento por user_id
 
-## Estrutura do Projeto
-
-### Frontend (`/frontend`)
-- **Linguagem**: Dart/Flutter
-- **Banco Local**: SQLite (sqflite)
-- **Features Principais**:
-  - Registro de trabalhos (corridas/entregas)
-  - Controle de gastos categorizados
-  - Gestão de manutenções com intervalos configuráveis
-  - Sistema de metas e objetivos
-  - Relatórios e estatísticas
-  - Backup local e compartilhamento
-  - Sincronização com nuvem
-
-### Backend (`/backend`)
-- **Linguagem**: Dart
-- **Framework**: Shelf
-- **Porta**: 5000
-- **Dependências**:
-  - shelf: ^1.4.1 (servidor HTTP)
-  - shelf_router: ^1.1.4 (roteamento)
-  - shelf_cors_headers: ^0.1.5 (CORS)
-  - dotenv: ^4.2.0 (variáveis de ambiente)
-  - logging: ^1.2.0 (logs)
-  - supabase: ^2.0.0 (cliente Supabase)
-  - crypto: ^3.0.3 (criptografia)
-  - dart_jsonwebtoken: ^2.13.0 (autenticação JWT)
-
-### Banco de Dados
-- **SQLite no backend** (`km_dollar.db`)
-- **Tabelas**: users, trabalho, gastos, manutencao
-- **Isolamento**: Todos os registros filtrados por `user_id`
-- **Segurança**: DELETE/UPDATE validam propriedade do registro (retornam 404 se não pertencer ao usuário)
-
-## Configuração e Execução
-
-### Backend
-```bash
-cd backend
-dart pub get
-PORT=5000 dart run bin/server.dart
-```
-
-### Frontend
-`` vai ser compilado no codemagic isso o usuário vai fazer manual.
-```
-
-## Funcionalidades Principais
-
-### 1. Registro de Trabalhos
-- Data, hora, valor ganho
-- Km inicial e final
-- Tipo de serviço (app de transporte)
-- Observações opcionais
-
-### 2. Controle de Gastos
-- Categorização customizável
-- Valores e datas
-- Vinculação opcional a trabalhos
-- Relatórios por período
-
-### 3. Gestão de Manutenções
-- Tipos: óleo, pneus, freios, corrente, etc.
-- Intervalos configuráveis (km ou dias)
-- Alertas de vencimento
-- Histórico completo
-
-### 4. Metas e Objetivos
-- Metas diárias e mensais
-- Eficiência de combustível
-- Progresso em tempo real
-- Estatísticas de desempenho
-
-### 5. Backup e Sincronização
-- **SyncService** gerencia sincronização automática
-- Download automático de dados do backend após login bem-sucedido
-- Métodos insertOrUpdate para merge de dados locais/remotos
-- Suporte offline (dados salvos localmente mesmo sem conexão)
-
-#
-## Segurança
-- **Login obrigatório** (estilo Facebook)
-- **JWT** obrigatório via variável de ambiente JWT_SECRET (sem fallback)
-- **Senhas hasheadas**: bcrypt com salt único automático (compatível com SHA-256 legado)
-- **Isolamento de dados**: WHERE user_id = ? em todas as queries
-- **Validação de propriedade**: DELETE/UPDATE verificam se registro pertence ao usuário (SELECT changes())
-- **Middleware premium**: composto após authMiddleware sem duplicar validação
-
-## CI/CD
-- **Plataforma**: Codemagic
-- **Target**: Android APK
-- **Configuração**: `codemagic.yaml`
-
----
 ## ATENÇÃO 
-- **Multi-window Android**: HabilitaR PARA APK PODER ABRIR TAMBEM NAS OPÇÕES DE JANELAS FLUTUANTES 
+- **Multi-window Android**: HabilitaR PARA APK PODER ABRIR TAMBEM NAS OPÇÕES DE JANELAS FLUTUANTES e trla dividia rm qualquer celular 
 
 ## 
