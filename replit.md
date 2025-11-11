@@ -106,25 +106,16 @@ PORT=5000 dart run bin/server.dart
 - Estatísticas de desempenho
 
 ### 5. Backup e Sincronização
-- Backup local (JSON)
-- Compartilhamento via share
 - Transmissão em tempo real para backend (OnlineDataService)
 - Dados sincronizados a cada ação do usuário
 
-## Tema "Grau 244"
-Interface moderna com estética jovem motociclista:
-- Gradientes neutros (cinzas, pretos, brancos)
-- Material Design 3
-- Cores de destaque para ações importantes
-- Design limpo e intuitivo
-
+#
 ## Segurança
 - **Login obrigatório** (estilo Facebook)
 - **JWT** com refresh tokens
 - **Senhas hasheadas** (bcrypt)
 - **Isolamento de dados**: WHERE user_id = ? em todas as queries
 - **Validação de propriedade**: DELETE/UPDATE verificam se registro pertence ao usuário (SELECT changes())
-- **Multi-window Android**: Habilitado via android:resizeableActivity="true" na <activity>
 
 ## CI/CD
 - **Plataforma**: Codemagic
@@ -132,59 +123,7 @@ Interface moderna com estética jovem motociclista:
 - **Configuração**: `codemagic.yaml`
 
 ---
-
-## 🔧 PROBLEMAS IDENTIFICADOS E CORREÇÕES NECESSÁRIAS (11/11/2025)
-
-### 🔴 PROBLEMAS CRÍTICOS
-
-#### 1. Botão "Limpar Todos os Dados" NÃO FUNCIONA
-- **Arquivo:** `frontend/lib/screens/configuracoes_screen.dart` (linha 724-739)
-- **Problema:** Mostra mensagem de sucesso mas NÃO chama `DatabaseService.clearAllData()`
-- **Ação:** Implementar limpeza real do banco + logout + alerta de risco
-
-#### 2. Tipos de Manutenção VAZIOS na primeira instalação
-- **Arquivo:** `frontend/lib/services/database_service.dart`
-- **Problema:** Intervalos são inseridos mas tipos NÃO
-- **Ação:** Inicializar tipos padrão (Troca de óleo, Revisão geral, Pneus, etc) na criação do banco
-
-#### 3. Categorias de Gastos NÃO inicializam
-- **Arquivo:** `frontend/lib/services/database_service.dart` + `constants/categories.dart`
-- **Problema:** Constantes existem mas não são inseridas no banco
-- **Ação:** Inserir categorias padrão (Combustível, Alimentação, Pedágio, etc) na criação do banco
-
-#### 4. Dados locais permanecem após logout
-- **Arquivo:** `frontend/lib/services/auth_service.dart` (linha 65-67)
-- **Problema:** Logout só remove token, SQLite continua com dados
-- **Ação:** Chamar `DatabaseService.clearAllData()` no logout
-
-### 🗑️ BOTÕES DESNECESSÁRIOS (POLUIÇÃO DE UI)
-
-| Item | Arquivo | Ação |
-|------|---------|------|
-| Menu "Sincronizar" | `home_screen.dart` linha 176-184 | REMOVER |
-| "Backup na Nuvem" | `configuracoes_screen.dart` linha 430-436 | REMOVER |
-| "Compartilhar Backup" | `configuracoes_screen.dart` linha 648-652 | REMOVER |
-| Tela SyncScreen inteira | `sync_screen.dart` + `main.dart` rota | DELETAR |
-| "Limpar Cache" (fake) | `configuracoes_screen.dart` linha 461-467 | REMOVER |
-| Tab "Backup" completa | `configuracoes_screen.dart` linha 615-694 | REMOVER |
-
-### 🧹 CÓDIGO LIXO
-
-- **TODOs não implementados:**
-  - `sync_service.dart` linha 231-233
-  - `premium_screen.dart` linha 337
-- **Funções fake:**
-  - `_clearCache()` - apenas delay sem ação
-  - `_clearAllData()` - não limpa nada
-
-### ✅ PLANO DE CORREÇÃO
-
-1. ✅ Inicializar categorias de gastos padrão
-2. ✅ Inicializar tipos de manutenção padrão
-3. ✅ Corrigir botão "Limpar Todos os Dados"
-4. ✅ Limpar dados locais no logout
-5. ✅ Remover botões/telas de sincronização
-6. ✅ Remover tab Backup das configurações
-7. ✅ Limpar código fake/inútil
+## ATENÇÃO 
+- **Multi-window Android**: HabilitaR PARA APK PODER ABRIR TAMBEM NAS OPÇÕES DE JANELAS FLUTUANTES 
 
 ## 
