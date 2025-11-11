@@ -7,12 +7,10 @@ import 'screens/configuracoes_screen.dart';
 import 'screens/goals_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
-import 'screens/premium_screen.dart';
 import 'screens/backend_config_screen.dart';
 import 'services/database_service.dart';
 import 'services/theme_service.dart';
 import 'services/backend_config_service.dart';
-import 'services/connectivity_service.dart';
 import 'services/auth_service.dart';
 import 'theme/app_theme.dart';
 
@@ -29,9 +27,6 @@ void main() async {
   final themeService = ThemeService();
   await themeService.init();
 
-  // Iniciar monitoramento de conectividade
-  ConnectivityService.instance.startMonitoring();
-
   runApp(MyApp(themeService: themeService));
 }
 
@@ -45,7 +40,6 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: themeService),
-        ChangeNotifierProvider.value(value: ConnectivityService.instance),
       ],
       child: Consumer<ThemeService>(
         builder: (context, themeService, child) {
@@ -63,7 +57,6 @@ class MyApp extends StatelessWidget {
               '/goals': (context) => const GoalsScreen(),
               '/login': (context) => LoginScreen(),
               '/register': (context) => RegisterScreen(),
-              '/premium': (context) => PremiumScreen(),
               '/backend-config': (context) => const BackendConfigScreen(),
             },
             debugShowCheckedModeBanner: false,

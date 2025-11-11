@@ -7,8 +7,6 @@ import 'package:dotenv/dotenv.dart';
 import 'package:logging/logging.dart';
 
 import '../lib/routes/auth_routes.dart';
-import '../lib/routes/premium_routes.dart';
-import '../lib/routes/backup_routes.dart';
 import '../lib/routes/trabalho_routes.dart';
 import '../lib/routes/gastos_routes.dart';
 import '../lib/routes/manutencao_routes.dart';
@@ -78,16 +76,8 @@ void main() async {
     // Health check
     ..get('/health', _healthHandler)
     
-    // Rotas da API (simplificado para debug)
+    // Rotas da API
     ..mount('/api/auth/', AuthRoutes(authService).router)
-    ..mount('/api/premium/', 
-      const Pipeline()
-        .addMiddleware(authMiddleware(authService))
-        .addHandler(PremiumRoutes().router))
-    ..mount('/api/backup/', 
-      const Pipeline()
-        .addMiddleware(authMiddleware(authService))
-        .addHandler(BackupRoutes(databaseService, authService).router))
     ..mount('/api/trabalho/', 
       const Pipeline()
         .addMiddleware(authMiddleware(authService))
@@ -165,13 +155,13 @@ Response _homeHandler(Request request) {
     <div class="endpoint"><span class="method">POST</span> /api/auth/login - Login de usuário</div>
     <div class="endpoint"><span class="method">POST</span> /api/auth/logout - Logout de usuário</div>
     <div class="endpoint"><span class="method">GET</span> /api/auth/me - Dados do usuário logado</div>
-    <div class="endpoint"><span class="method">GET</span> /api/premium/status - Status premium</div>
-    <div class="endpoint"><span class="method">GET</span> /api/backup/download - Download de dados</div>
-    <div class="endpoint"><span class="method">POST</span> /api/backup/upload - Upload de dados</div>
+    <div class="endpoint"><span class="method">GET</span> /api/trabalho - Listar trabalhos</div>
+    <div class="endpoint"><span class="method">GET</span> /api/gastos - Listar gastos</div>
+    <div class="endpoint"><span class="method">GET</span> /api/manutencao - Listar manutenções</div>
     
     <h2>📱 Flutter Mobile App</h2>
     <p>Este backend serve o aplicativo mobile KM\$ desenvolvido em Flutter.</p>
-    <p>Funcionalidades: Controle financeiro, login/cadastro, backup em nuvem, relatórios.</p>
+    <p>Funcionalidades: Controle financeiro, login/cadastro, relatórios.</p>
     
     <h2>🔗 Links</h2>
     <p><a href="/health">Health Check</a></p>
