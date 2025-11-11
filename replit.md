@@ -106,16 +106,19 @@ PORT=5000 dart run bin/server.dart
 - Estatísticas de desempenho
 
 ### 5. Backup e Sincronização
-- Transmissão em tempo real para backend (OnlineDataService)
-- Dados sincronizados a cada ação do usuário
+- **SyncService** gerencia sincronização automática
+- Download automático de dados do backend após login bem-sucedido
+- Métodos insertOrUpdate para merge de dados locais/remotos
+- Suporte offline (dados salvos localmente mesmo sem conexão)
 
 #
 ## Segurança
 - **Login obrigatório** (estilo Facebook)
-- **JWT** com refresh tokens
-- **Senhas hasheadas** (bcrypt)
+- **JWT** obrigatório via variável de ambiente JWT_SECRET (sem fallback)
+- **Senhas hasheadas**: bcrypt com salt único automático (compatível com SHA-256 legado)
 - **Isolamento de dados**: WHERE user_id = ? em todas as queries
 - **Validação de propriedade**: DELETE/UPDATE verificam se registro pertence ao usuário (SELECT changes())
+- **Middleware premium**: composto após authMiddleware sem duplicar validação
 
 ## CI/CD
 - **Plataforma**: Codemagic
