@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../services/database_service.dart';
+import '../services/api_service.dart';
 import '../models/gasto_model.dart';
 import '../theme/app_theme.dart';
 import '../constants/categories.dart';
@@ -14,7 +14,6 @@ class GastosScreen extends StatefulWidget {
 
 class _GastosScreenState extends State<GastosScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final DatabaseService _db = DatabaseService.instance;
   final _formKey = GlobalKey<FormState>();
   
   final _valorController = TextEditingController();
@@ -52,29 +51,40 @@ class _GastosScreenState extends State<GastosScreen> with SingleTickerProviderSt
 
   Future<void> _loadGastos() async {
     setState(() => _isLoading = true);
-    _gastos = await _db.getGastos();
+    final response = await ApiService.getGastos();
+    if (response.success && response.data != null) {
+      final gastosList = response.data!['gastos'] as List<dynamic>;
+      _gastos = gastosList.map((g) => GastoModel.fromMap(g)).toList();
+    }
     setState(() => _isLoading = false);
   }
 
   Future<void> _saveGasto() async {
     if (_formKey.currentState!.validate()) {
-      final gasto = GastoModel(
-        data: _selectedDate,
-        categoria: _selectedCategoria,
-        valor: double.parse(_valorController.text),
-        descricao: _descricaoController.text,
-        dataRegistro: DateTime.now(),
-      );
+      final gastoData = {
+        'data': _selectedDate.toIso8601String(),
+        'categoria': _selectedCategoria,
+        'valor': double.parse(_valorController.text),
+        'descricao': _descricaoController.text,
+        'data_registro': DateTime.now().toIso8601String(),
+      };
 
-      await _db.insertGasto(gasto);
+      final response = await ApiService.createGasto(gastoData);
       
-      _clearForm();
-      _loadGastos();
-      
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gasto salvo com sucesso!')),
-      );
+      if (response.success) {
+        _clearForm();
+        await _loadGastos();
+        
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gasto salvo com sucesso!')),
+        );
+      } else {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response.message)),
+        );
+      }
     }
   }
 
@@ -87,13 +97,20 @@ class _GastosScreenState extends State<GastosScreen> with SingleTickerProviderSt
     }
   }
 
-  Future<void> _deleteGasto(int id) async {
-    await _db.deleteGasto(id);
-    _loadGastos();
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Gasto excluído com sucesso!')),
-    );
+  Future<void> _deleteGasto(String id) async {
+    final response = await ApiService.deleteGasto(id);
+    if (response.success) {
+      await _loadGastos();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gasto excluído com sucesso!')),
+      );
+    } else {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response.message)),
+      );
+    }
   }
 
   @override
@@ -417,7 +434,7 @@ class _GastosScreenState extends State<GastosScreen> with SingleTickerProviderSt
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              _deleteGasto(gasto.id!);
+              _deleteGasto(gasto.id.toString());
             },
             child: const Text('Excluir', style: TextStyle(color: Colors.red)),
           ),
