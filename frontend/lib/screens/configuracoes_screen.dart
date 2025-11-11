@@ -321,37 +321,6 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
 
               const SizedBox(height: 24),
 
-              // Seção Conta e Sincronização
-              const Text(
-                '☁️ Conta e Sincronização',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-
-              ModernCard(
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.login, color: AppTheme.primaryColor),
-                      title: const Text('Login'),
-                      subtitle: const Text('Fazer login para recursos premium'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.pushNamed(context, '/login'),
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.star, color: AppTheme.accentColor),
-                      title: const Text('Premium'),
-                      subtitle: const Text('Recursos avançados'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.pushNamed(context, '/premium'),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
               // Seção Performance
               const Text(
                 '⚡ Performance',

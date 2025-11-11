@@ -177,55 +177,6 @@ class ApiService {
     }
   }
 
-  // Premium
-  static Future<ApiResponse> checkPremiumStatus() async {
-    try {
-      final response = await http.get(
-        Uri.parse(_getEndpointUrl('premium/status')),
-        headers: await _authHeaders,
-      ).timeout(_timeout);
-
-      return _handleResponse(response);
-    } catch (e) {
-      return ApiResponse(
-        success: false,
-        message: 'Erro de conexão: $e',
-      );
-    }
-  }
-
-  static Future<ApiResponse> createPremiumSubscription() async {
-    try {
-      final response = await http.post(
-        Uri.parse(_getEndpointUrl('premium/subscribe')),
-        headers: await _authHeaders,
-      ).timeout(_timeout);
-
-      return _handleResponse(response);
-    } catch (e) {
-      return ApiResponse(
-        success: false,
-        message: 'Erro de conexão: $e',
-      );
-    }
-  }
-
-  static Future<ApiResponse> cancelPremiumSubscription() async {
-    try {
-      final response = await http.post(
-        Uri.parse(_getEndpointUrl('premium/cancel')),
-        headers: await _authHeaders,
-      ).timeout(_timeout);
-
-      return _handleResponse(response);
-    } catch (e) {
-      return ApiResponse(
-        success: false,
-        message: 'Erro de conexão: $e',
-      );
-    }
-  }
-
   // CRUD APIs - Trabalho
   static Future<ApiResponse> uploadTrabalhos(List<Map<String, dynamic>> trabalhos) async {
     try {
@@ -324,40 +275,6 @@ class ApiService {
       return ApiResponse(
         success: false,
         message: 'Erro ao baixar manutenções: $e',
-      );
-    }
-  }
-
-  // Backup Completo (todos os dados)
-  static Future<ApiResponse> uploadFullBackup(Map<String, dynamic> backupData) async {
-    try {
-      final response = await http.post(
-        Uri.parse(_getEndpointUrl('backup/upload')),
-        headers: await _authHeaders,
-        body: jsonEncode(backupData),
-      ).timeout(_timeout);
-
-      return _handleResponse(response);
-    } catch (e) {
-      return ApiResponse(
-        success: false,
-        message: 'Erro no backup completo: $e',
-      );
-    }
-  }
-
-  static Future<ApiResponse> downloadFullBackup() async {
-    try {
-      final response = await http.get(
-        Uri.parse(_getEndpointUrl('backup/download')),
-        headers: await _authHeaders,
-      ).timeout(_timeout);
-
-      return _handleResponse(response);
-    } catch (e) {
-      return ApiResponse(
-        success: false,
-        message: 'Erro ao baixar backup: $e',
       );
     }
   }

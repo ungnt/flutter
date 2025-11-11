@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/database_service.dart';
 import '../services/auth_service.dart';
-import '../services/online_data_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
 import '../widgets/animated_counter.dart';
@@ -47,8 +46,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadDashboardData() async {
     setState(() => isLoading = true);
-    
-    await OnlineDataService.instance.loadAllDataFromBackend();
     
     final hoje = DateTime.now();
     final inicioMes = DateTime(hoje.year, hoje.month, 1);
