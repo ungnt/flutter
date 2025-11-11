@@ -1,0 +1,36 @@
+Running Gradle task 'assembleRelease'...                        
+Warning: SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+Checking the license for package Android SDK Build-Tools 33.0.1 in /usr/local/share/android-sdk/licenses
+License for package Android SDK Build-Tools 33.0.1 accepted.
+Preparing "Install Android SDK Build-Tools 33.0.1 v.33.0.1".
+"Install Android SDK Build-Tools 33.0.1 v.33.0.1" ready.
+Installing Android SDK Build-Tools 33.0.1 in /usr/local/share/android-sdk/build-tools/33.0.1
+"Install Android SDK Build-Tools 33.0.1 v.33.0.1" complete.
+"Install Android SDK Build-Tools 33.0.1 v.33.0.1" finished.
+lib/screens/configuracoes_screen.dart:151:13: Error: The getter 'BackupService' isn't defined for the class '_ConfiguracoesScreenState'.
+ - '_ConfiguracoesScreenState' is from 'package:motouber/screens/configuracoes_screen.dart' ('lib/screens/configuracoes_screen.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'BackupService'.
+      await BackupService.shareBackup();
+            ^^^^^^^^^^^^^
+Target kernel_snapshot_program failed: Exception
+
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileFlutterBuildRelease'.
+> Process 'command '/Users/builder/programs/flutter/bin/flutter'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1m 54s
+Running Gradle task 'assembleRelease'...                          115.5s
+Gradle task assembleRelease failed with exit code 1
+
+
+Build failed :|
+Step 4 script `Build APK` exited with status code 1

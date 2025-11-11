@@ -145,22 +145,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
   }
 
   // Função _exportarDados removida - não utilizada
-
-  Future<void> _shareModernBackup() async {
-    try {
-      await BackupService.shareBackup();
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✅ Backup compartilhado com sucesso!')),
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('❌ Erro ao criar backup: $e')),
-      );
-    }
-  }
-
+  // Função _shareModernBackup removida - não utilizada
   // Função _restoreBackup removida - não utilizada
 
   void _showTechInfo() {
@@ -526,42 +511,9 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '💾 Backup e Restauração',
+            '⚙️ Gerenciamento de Dados',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 16),
-
-          ModernCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.cloud_upload, color: AppTheme.primaryColor),
-                    SizedBox(width: 12),
-                    Text(
-                      'Backup Avançado',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Sistema completo de backup com todos os seus dados: trabalhos, gastos, manutenções e configurações.',
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _shareModernBackup(),
-                    icon: const Icon(Icons.share),
-                    label: const Text('Compartilhar Backup'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
           const SizedBox(height: 16),
 
           Card(
