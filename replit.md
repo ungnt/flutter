@@ -13,7 +13,8 @@
 6. **Backend rodando separado**
 
 7. **SUPABASE NÃO VAI SER USADO** -
-8. 
+8. quando for sokicitado a leitura completa do projeto, leia pasta por pasta, arquivo por arquivo e linha por linha sem pular nenhuma inserção de texto.
+9. anote sempre que ver um erro
 
 
 
