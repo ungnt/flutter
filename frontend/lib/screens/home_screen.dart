@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
+import '../services/dashboard_cache_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/modern_card.dart';
 import '../widgets/animated_counter.dart';
@@ -28,6 +29,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isLoading = true;
   bool isAuthenticated = false;
   String? userEmail;
+  bool isUsingCachedData = false;
+  DateTime? lastUpdate;
 
   @override
   void initState() {
@@ -50,21 +53,67 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => isLoading = true);
     
     try {
+      final cachedData = await DashboardCacheService.instance.loadDashboardData();
+      if (cachedData != null) {
+        setState(() {
+          dadosHoje = cachedData['dadosHoje'] as Map<String, double>;
+          dadosMes = cachedData['dadosMes'] as Map<String, double>;
+          ultimosRegistros = cachedData['ultimosRegistros'] as List<Map<String, dynamic>>;
+          lastUpdate = cachedData['lastUpdate'] as DateTime?;
+          isUsingCachedData = true;
+          isLoading = false;
+        });
+      }
+      
+      final online = await ApiService.isOnline();
+      
+      if (!online && mounted) {
+        if (cachedData == null) {
+          setState(() => isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Sem conexão com o servidor e nenhum dado em cache. Verifique sua internet.'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 5),
+            ),
+          );
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Modo offline - mostrando dados salvos'),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+        }
+        return;
+      }
+      
+      setState(() => isLoading = true);
+      
       final hoje = DateTime.now();
       final inicioHoje = DateTime(hoje.year, hoje.month, hoje.day);
       final fimHoje = DateTime(hoje.year, hoje.month, hoje.day, 23, 59, 59);
       final inicioMes = DateTime(hoje.year, hoje.month, 1);
       final fimMes = DateTime(hoje.year, hoje.month + 1, 0, 23, 59, 59);
       
-      // Dados de hoje
-      final responseTrabHoje = await ApiService.getTrabalhos(dataInicio: inicioHoje, dataFim: fimHoje);
-      final responseGastosHoje = await ApiService.getGastos(dataInicio: inicioHoje, dataFim: fimHoje);
-      final responseManuHoje = await ApiService.getManutencoes(dataInicio: inicioHoje, dataFim: fimHoje);
+      final results = await Future.wait([
+        ApiService.getTrabalhos(dataInicio: inicioHoje, dataFim: fimHoje),
+        ApiService.getGastos(dataInicio: inicioHoje, dataFim: fimHoje),
+        ApiService.getManutencoes(dataInicio: inicioHoje, dataFim: fimHoje),
+        ApiService.getTrabalhos(dataInicio: inicioMes, dataFim: fimMes),
+        ApiService.getGastos(dataInicio: inicioMes, dataFim: fimMes),
+        ApiService.getManutencoes(dataInicio: inicioMes, dataFim: fimMes),
+      ], eagerError: true);
       
-      // Dados do mês
-      final responseTrabMes = await ApiService.getTrabalhos(dataInicio: inicioMes, dataFim: fimMes);
-      final responseGastosMes = await ApiService.getGastos(dataInicio: inicioMes, dataFim: fimMes);
-      final responseManuMes = await ApiService.getManutencoes(dataInicio: inicioMes, dataFim: fimMes);
+      final responseTrabHoje = results[0];
+      final responseGastosHoje = results[1];
+      final responseManuHoje = results[2];
+      final responseTrabMes = results[3];
+      final responseGastosMes = results[4];
+      final responseManuMes = results[5];
       
       // Trabalhos de hoje
       List<TrabalhoModel> trabalhosHoje = [];
@@ -134,17 +183,48 @@ class _HomeScreenState extends State<HomeScreen> {
       // Últimos registros (últimos 10 do mês)
       ultimosRegistros = _getUltimosRegistros(trabalhosMes, gastosMes, manutencoesMes);
       
-      setState(() => isLoading = false);
+      await DashboardCacheService.instance.saveDashboardData(
+        dadosHoje: dadosHoje,
+        dadosMes: dadosMes,
+        ultimosRegistros: ultimosRegistros,
+      );
+      
+      setState(() {
+        isLoading = false;
+        isUsingCachedData = false;
+        lastUpdate = DateTime.now();
+      });
     } catch (e) {
       print('Erro ao carregar dados do dashboard: $e');
-      setState(() => isLoading = false);
-      if (mounted) {
+      
+      final cachedData = await DashboardCacheService.instance.loadDashboardData();
+      if (cachedData != null && mounted) {
+        setState(() {
+          dadosHoje = cachedData['dadosHoje'] as Map<String, double>;
+          dadosMes = cachedData['dadosMes'] as Map<String, double>;
+          ultimosRegistros = cachedData['ultimosRegistros'] as List<Map<String, dynamic>>;
+          lastUpdate = cachedData['lastUpdate'] as DateTime?;
+          isUsingCachedData = true;
+          isLoading = false;
+        });
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao carregar dados: $e'),
-            backgroundColor: Colors.red,
+            content: Text('Erro ao conectar. Mostrando dados salvos: ${e.toString().split(':').first}'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 4),
           ),
         );
+      } else {
+        setState(() => isLoading = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao carregar dados: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -463,58 +543,89 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildAuthenticationStatus() {
-    return ModernCard(
-      backgroundColor: isAuthenticated 
-        ? AppTheme.successColor.withOpacity(0.05)
-        : AppTheme.warningColor.withOpacity(0.05),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isAuthenticated 
-                ? AppTheme.successColor.withOpacity(0.1)
-                : AppTheme.warningColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              isAuthenticated ? Icons.cloud_done : Icons.cloud_off,
-              color: isAuthenticated ? AppTheme.successColor : AppTheme.warningColor,
-              size: 20,
-            ),
+    final showOfflineWarning = isUsingCachedData || !isAuthenticated;
+    final statusColor = showOfflineWarning ? AppTheme.warningColor : AppTheme.successColor;
+    
+    return Column(
+      children: [
+        ModernCard(
+          backgroundColor: statusColor.withOpacity(0.05),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  showOfflineWarning ? Icons.cloud_off : Icons.cloud_done,
+                  color: statusColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isUsingCachedData ? 'Modo Offline' : (isAuthenticated ? 'Online' : 'Não autenticado'),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: statusColor,
+                      ),
+                    ),
+                    if (isAuthenticated && userEmail != null && !isUsingCachedData) 
+                      Text(
+                        userEmail!,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      )
+                    else if (isUsingCachedData && lastUpdate != null)
+                      Text(
+                        'Dados de ${DateFormat('dd/MM/yyyy HH:mm').format(lastUpdate!)}',
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      )
+                    else if (!isAuthenticated)
+                      const Text(
+                        'Dados salvos apenas localmente',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                  ],
+                ),
+              ),
+              if (!isAuthenticated)
+                TextButton(
+                  onPressed: _navigateToLogin,
+                  child: const Text('Entrar'),
+                ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+        if (isUsingCachedData) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.warningColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppTheme.warningColor.withOpacity(0.3)),
+            ),
+            child: Row(
               children: [
-                Text(
-                  isAuthenticated ? 'Online' : 'Modo Offline',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: isAuthenticated ? AppTheme.successColor : AppTheme.warningColor,
+                Icon(Icons.info_outline, size: 16, color: AppTheme.warningColor),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Mostrando dados salvos. Puxe para baixo para tentar atualizar.',
+                    style: TextStyle(fontSize: 12),
                   ),
                 ),
-                if (isAuthenticated && userEmail != null) 
-                  Text(
-                    userEmail!,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  )
-                else if (!isAuthenticated)
-                  const Text(
-                    'Dados salvos apenas localmente',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
               ],
             ),
           ),
-          if (!isAuthenticated)
-            TextButton(
-              onPressed: _navigateToLogin,
-              child: const Text('Entrar'),
-            ),
         ],
-      ),
+      ],
     );
   }
 
