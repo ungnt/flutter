@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:bcrypt/bcrypt.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:logging/logging.dart';
@@ -12,17 +13,23 @@ class AuthService {
   
   AuthService(this._database, this._jwtSecret);
 
-  /// Hash da senha com salt
+  /// Hash da senha com bcrypt (salt único automático)
   String _hashPassword(String password) {
-    final salt = 'km_dollar_salt_2025'; // Em produção, use salt aleatório por usuário
-    final bytes = utf8.encode(password + salt);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
+    return BCrypt.hashpw(password, BCrypt.gensalt());
   }
 
-  /// Verificar senha
+  /// Verificar senha (suporta bcrypt novo e SHA-256 legado)
   bool _verifyPassword(String password, String hashedPassword) {
-    return _hashPassword(password) == hashedPassword;
+    // Tentar bcrypt primeiro (hash começa com $2)
+    if (hashedPassword.startsWith('\$2')) {
+      return BCrypt.checkpw(password, hashedPassword);
+    }
+    
+    // Fallback para SHA-256 legado (para senhas antigas)
+    final salt = 'km_dollar_salt_2025';
+    final bytes = utf8.encode(password + salt);
+    final digest = sha256.convert(bytes);
+    return digest.toString() == hashedPassword;
   }
 
   /// Gerar JWT token

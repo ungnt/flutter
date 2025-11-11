@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'backend_config_service.dart';
+import 'sync_service.dart';
 
 class ApiService {
   // URL dinâmica baseada na configuração atual
@@ -119,6 +120,9 @@ class ApiService {
         if (result.data!['user'] != null) {
           await saveUserData(result.data!['user']);
         }
+        
+        // Baixar dados do backend após login bem-sucedido
+        await SyncService.instance.downloadAllDataFromBackend();
       }
 
       return result;

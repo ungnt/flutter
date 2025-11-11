@@ -60,7 +60,12 @@ void main() async {
   _logger.info('Iniciando servidor KM\$ Backend Dart...');
   
   // Inicializar serviços
-  final jwtSecret = Platform.environment['JWT_SECRET'] ?? env['JWT_SECRET'] ?? 'seu_jwt_secret_muito_seguro_km_dollar_backend_aqui';
+  final jwtSecret = Platform.environment['JWT_SECRET'] ?? env['JWT_SECRET'];
+  if (jwtSecret == null || jwtSecret.isEmpty) {
+    _logger.severe('ERRO FATAL: JWT_SECRET não definido nas variáveis de ambiente');
+    exit(1);
+  }
+  
   final dbPath = Platform.environment['DB_PATH'] ?? env['DB_PATH'] ?? 'km_dollar.db';
   
   final databaseService = DatabaseService(dbPath);

@@ -68,22 +68,16 @@ class AuthMiddleware {
 }
 
 /// Middleware para validar apenas usuários Premium
+/// Deve ser composto APÓS authMiddleware na pipeline
 Middleware premiumMiddleware(AuthService authService) {
   return (Handler innerHandler) {
     return (Request request) async {
-      // Primeiro, validar autenticação
-      final authResult = await authMiddleware(authService)(innerHandler)(request);
-      
-      // Se não passou na auth, retornar erro de auth
-      if (authResult.statusCode == 401) {
-        return authResult;
-      }
-      
-      // Verificar se é Premium
+      // O request já passou pelo authMiddleware, então context já está preenchido
       final isPremium = request.context['is_premium'] as bool? ?? false;
       
       if (!isPremium) {
-        _logger.warning('Acesso negado - usuário não Premium: ${request.context['user_email']}');
+        final userEmail = request.context['user_email'] as String? ?? 'unknown';
+        _logger.warning('Acesso negado - usuário não Premium: $userEmail');
         return Response.forbidden(
           '{"error": "PREMIUM_REQUIRED", "message": "Esta funcionalidade requer conta Premium"}',
           headers: {'Content-Type': 'application/json'},
