@@ -196,22 +196,6 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
     );
   }
 
-  Future<void> _clearCache() async {
-    try {
-      // Simulação de limpeza de cache
-      await Future.delayed(const Duration(seconds: 1));
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('🧹 Cache limpo com sucesso!')),
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('❌ Erro ao limpar cache: $e')),
-      );
-    }
-  }
-
   Future<void> _refreshData() async {
     try {
       await _loadConfiguracoes();
@@ -223,60 +207,6 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('❌ Erro ao atualizar dados: $e')),
-      );
-    }
-  }
-
-  /// Lida com o clique em "Backup na Nuvem" - verifica login automaticamente
-  Future<void> _handleCloudBackup() async {
-    try {
-      // Verificar se o usuário está logado
-      final isLoggedIn = await ApiService.isLoggedIn();
-      
-      if (!isLoggedIn) {
-        // Mostrar dialog perguntando se quer fazer login
-        final shouldLogin = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Login Necessário'),
-            content: const Text(
-              'Para usar o backup na nuvem, você precisa estar logado. '
-              'Deseja fazer login agora?'
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancelar'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Fazer Login'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        );
-
-        if (shouldLogin == true) {
-          // Navegar para tela de login
-          final loginResult = await Navigator.pushNamed(context, '/login');
-          if (loginResult == true) {
-            // Login bem-sucedido, ir para sync
-            if (!context.mounted) return;
-            Navigator.pushNamed(context, '/sync');
-          }
-        }
-      } else {
-        // Usuário já está logado, ir direto para sync
-        Navigator.pushNamed(context, '/sync');
-      }
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao verificar login: $e')),
       );
     }
   }
@@ -425,14 +355,6 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
                     ),
                     const Divider(height: 1),
                     ListTile(
-                      leading: const Icon(Icons.cloud_sync, color: AppTheme.secondaryColor),
-                      title: const Text('Backup na Nuvem'),
-                      subtitle: const Text('Sincronizar dados com a nuvem'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _handleCloudBackup(),
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
                       leading: const Icon(Icons.star, color: AppTheme.accentColor),
                       title: const Text('Premium'),
                       subtitle: const Text('Recursos avançados'),
@@ -453,24 +375,12 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> with SingleTi
               const SizedBox(height: 12),
 
               ModernCard(
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.storage, color: AppTheme.warningColor),
-                      title: const Text('Limpar Cache'),
-                      subtitle: const Text('Remove dados temporários'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _clearCache(),
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.refresh, color: AppTheme.primaryColor),
-                      title: const Text('Recarregar Dados'),
-                      subtitle: const Text('Atualiza informações do banco'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _refreshData(),
-                    ),
-                  ],
+                child: ListTile(
+                  leading: const Icon(Icons.refresh, color: AppTheme.primaryColor),
+                  title: const Text('Recarregar Dados'),
+                  subtitle: const Text('Atualiza informações do banco'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _refreshData(),
                 ),
               ),
             ],

@@ -7,7 +7,6 @@ import 'screens/configuracoes_screen.dart';
 import 'screens/goals_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
-import 'screens/sync_screen.dart';
 import 'screens/premium_screen.dart';
 import 'screens/backend_config_screen.dart';
 import 'services/database_service.dart';
@@ -64,7 +63,6 @@ class MyApp extends StatelessWidget {
               '/goals': (context) => const GoalsScreen(),
               '/login': (context) => LoginScreen(),
               '/register': (context) => RegisterScreen(),
-              '/sync': (context) => SyncScreen(),
               '/premium': (context) => PremiumScreen(),
               '/backend-config': (context) => const BackendConfigScreen(),
             },

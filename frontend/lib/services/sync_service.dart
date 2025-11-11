@@ -228,9 +228,11 @@ class SyncService {
         return false;
       }
 
-      //TODO: Implementar a lógica de download aqui
-
-      return true; //TODO: Mudar o retorno
+      final token = await AuthService.getStoredToken();
+      if (token == null) return false;
+      
+      await _downloadServerData(token);
+      return true;
 
     } catch (e) {
       print('Erro ao baixar dados da nuvem: $e');

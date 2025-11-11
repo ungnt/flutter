@@ -498,8 +498,4 @@ class _HomeScreenState extends State<HomeScreen> {
       _checkAuthenticationStatus();
     });
   }
-
-  void _navigateToSync() {
-    Navigator.pushNamed(context, '/sync');
-  }
 }
