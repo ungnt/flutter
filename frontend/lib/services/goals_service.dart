@@ -163,6 +163,7 @@ class GoalsService {
     final monthWork = monthResponse.success && monthResponse.data?['trabalhos'] != null
         ? (monthResponse.data!['trabalhos'] as List).map((t) => TrabalhoModel.fromJson(t)).toList()
         : <TrabalhoModel>[];
+    final monthEarnings = monthWork.fold<double>(0, (sum, t) => sum + t.ganhos);
 
     // Melhor dia do mês
     final bestDay = monthWork.isNotEmpty 
