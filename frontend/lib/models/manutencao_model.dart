@@ -1,7 +1,8 @@
 /// Model para manutenções do veículo
 /// Alinhado 100% com backend e Supabase
 class ManutencaoModel {
-  final String? id; // UUID String para compatibilidade total com Supabase
+  final int? localId; // ID local SQLite (INTEGER AUTOINCREMENT)
+  final String? remoteId; // UUID String para backend/Supabase
   final String? userId; // user_id String para sincronização
   final DateTime data;
   final String tipo;
@@ -12,7 +13,8 @@ class ManutencaoModel {
   final DateTime? updatedAt;  // Adicionado: updated_at do Supabase
 
   ManutencaoModel({
-    this.id,
+    this.localId,
+    this.remoteId,
     this.userId,
     required this.data,
     required this.tipo,
@@ -33,7 +35,8 @@ class ManutencaoModel {
       'data_registro': dataRegistro.toIso8601String(),
     };
     
-    if (id != null) map['id'] = id!;
+    if (localId != null) map['local_id'] = localId!;
+    if (remoteId != null) map['remote_id'] = remoteId!;
     if (userId != null) map['user_id'] = userId!;
     if (updatedAt != null) map['updated_at'] = updatedAt!.toIso8601String();
     
@@ -42,7 +45,8 @@ class ManutencaoModel {
 
   factory ManutencaoModel.fromMap(Map<String, dynamic> map) {
     return ManutencaoModel(
-      id: map['id']?.toString(),
+      localId: map['local_id'] as int?,
+      remoteId: map['remote_id']?.toString(),
       userId: map['user_id']?.toString(),
       data: DateTime.parse(map['data']),
       tipo: map['tipo'] ?? '',
@@ -54,10 +58,11 @@ class ManutencaoModel {
     );
   }
 
-  // Método fromJson necessário para sincronização
+  // Método fromJson necessário para sincronização (backend retorna 'id' como UUID)
   factory ManutencaoModel.fromJson(Map<String, dynamic> json) {
     return ManutencaoModel(
-      id: json['id']?.toString(),
+      localId: null, // Backend não tem localId
+      remoteId: json['id']?.toString(),
       userId: json['user_id']?.toString(),
       data: DateTime.parse(json['data']),
       tipo: json['tipo'] ?? '',
@@ -69,13 +74,27 @@ class ManutencaoModel {
     );
   }
 
-  // Método toJson para sincronização
+  // Método toJson para sincronização (backend espera 'id' como UUID)
   Map<String, dynamic> toJson() {
-    return toMap();
+    final map = {
+      'data': data.toIso8601String().split('T')[0],
+      'tipo': tipo,
+      'valor': valor,
+      'km_atual': kmAtual,
+      'descricao': descricao,
+      'data_registro': dataRegistro.toIso8601String(),
+    };
+    
+    if (remoteId != null) map['id'] = remoteId!;
+    if (userId != null) map['user_id'] = userId!;
+    if (updatedAt != null) map['updated_at'] = updatedAt!.toIso8601String();
+    
+    return map;
   }
 
   ManutencaoModel copyWith({
-    String? id,
+    int? localId,
+    String? remoteId,
     String? userId,
     DateTime? data,
     String? tipo,
@@ -86,7 +105,8 @@ class ManutencaoModel {
     DateTime? updatedAt,
   }) {
     return ManutencaoModel(
-      id: id ?? this.id,
+      localId: localId ?? this.localId,
+      remoteId: remoteId ?? this.remoteId,
       userId: userId ?? this.userId,
       data: data ?? this.data,
       tipo: tipo ?? this.tipo,

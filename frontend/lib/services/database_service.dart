@@ -25,7 +25,7 @@ class DatabaseService {
       databaseFactory = databaseFactoryFfiWeb;
       return await openDatabase(
         'km_dollar_web.db',
-        version: 3,
+        version: 4,
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
       );
@@ -37,48 +37,57 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
   }
 
   Future<void> _onCreate(Database db, int version) async {
-    // Tabela de trabalho (sem campo combustível)
+    // Tabela de trabalho com dual-ID system
     await db.execute('''
       CREATE TABLE trabalho (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        local_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        remote_id TEXT UNIQUE,
+        user_id TEXT,
         data TEXT NOT NULL,
         ganhos REAL NOT NULL,
         km REAL NOT NULL,
         horas REAL NOT NULL,
         observacoes TEXT,
-        data_registro TEXT NOT NULL
+        data_registro TEXT NOT NULL,
+        updated_at TEXT
       )
     ''');
 
-    // Tabela de gastos
+    // Tabela de gastos com dual-ID system
     await db.execute('''
       CREATE TABLE gastos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        local_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        remote_id TEXT UNIQUE,
+        user_id TEXT,
         data TEXT NOT NULL,
         categoria TEXT NOT NULL,
         valor REAL NOT NULL,
         descricao TEXT,
-        data_registro TEXT NOT NULL
+        data_registro TEXT NOT NULL,
+        updated_at TEXT
       )
     ''');
 
-    // Tabela de manutenções
+    // Tabela de manutenções com dual-ID system
     await db.execute('''
       CREATE TABLE manutencao (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        local_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        remote_id TEXT UNIQUE,
+        user_id TEXT,
         data TEXT NOT NULL,
         tipo TEXT NOT NULL,
         valor REAL NOT NULL,
         km_atual REAL NOT NULL,
         descricao TEXT,
-        data_registro TEXT NOT NULL
+        data_registro TEXT NOT NULL,
+        updated_at TEXT
       )
     ''');
 

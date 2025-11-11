@@ -1,7 +1,8 @@
 /// Model para registros de trabalho diário
 /// Alinhado 100% com backend e Supabase
 class TrabalhoModel {
-  final String? id; // UUID String para compatibilidade total com Supabase
+  final int? localId; // ID local SQLite (INTEGER AUTOINCREMENT)
+  final String? remoteId; // UUID String para backend/Supabase
   final String? userId; // user_id String para sincronização
   final DateTime data;
   final double ganhos;
@@ -12,7 +13,8 @@ class TrabalhoModel {
   final DateTime? updatedAt; // updated_at do Supabase
 
   TrabalhoModel({
-    this.id,
+    this.localId,
+    this.remoteId,
     this.userId,
     required this.data,
     required this.ganhos,
@@ -33,7 +35,8 @@ class TrabalhoModel {
       'data_registro': dataRegistro.toIso8601String(),
     };
     
-    if (id != null) map['id'] = id!;
+    if (localId != null) map['local_id'] = localId!;
+    if (remoteId != null) map['remote_id'] = remoteId!;
     if (userId != null) map['user_id'] = userId!;
     if (updatedAt != null) map['updated_at'] = updatedAt!.toIso8601String();
     
@@ -42,7 +45,8 @@ class TrabalhoModel {
 
   factory TrabalhoModel.fromMap(Map<String, dynamic> map) {
     return TrabalhoModel(
-      id: map['id']?.toString(),
+      localId: map['local_id'] as int?,
+      remoteId: map['remote_id']?.toString(),
       userId: map['user_id']?.toString(),
       data: DateTime.parse(map['data']),
       ganhos: map['ganhos']?.toDouble() ?? 0.0,
@@ -54,10 +58,11 @@ class TrabalhoModel {
     );
   }
 
-  // Método fromJson necessário para sincronização
+  // Método fromJson necessário para sincronização (backend retorna 'id' como UUID)
   factory TrabalhoModel.fromJson(Map<String, dynamic> json) {
     return TrabalhoModel(
-      id: json['id']?.toString(),
+      localId: null, // Backend não tem localId
+      remoteId: json['id']?.toString(),
       userId: json['user_id']?.toString(),
       data: DateTime.parse(json['data']),
       ganhos: json['ganhos']?.toDouble() ?? 0.0,
@@ -69,13 +74,27 @@ class TrabalhoModel {
     );
   }
 
-  // Método toJson para sincronização
+  // Método toJson para sincronização (backend espera 'id' como UUID)
   Map<String, dynamic> toJson() {
-    return toMap();
+    final map = {
+      'data': data.toIso8601String().split('T')[0],
+      'ganhos': ganhos,
+      'km': km,
+      'horas': horas,
+      'observacoes': observacoes,
+      'data_registro': dataRegistro.toIso8601String(),
+    };
+    
+    if (remoteId != null) map['id'] = remoteId!;
+    if (userId != null) map['user_id'] = userId!;
+    if (updatedAt != null) map['updated_at'] = updatedAt!.toIso8601String();
+    
+    return map;
   }
 
   TrabalhoModel copyWith({
-    String? id,
+    int? localId,
+    String? remoteId,
     String? userId,
     DateTime? data,
     double? ganhos,
@@ -86,7 +105,8 @@ class TrabalhoModel {
     DateTime? updatedAt,
   }) {
     return TrabalhoModel(
-      id: id ?? this.id,
+      localId: localId ?? this.localId,
+      remoteId: remoteId ?? this.remoteId,
       userId: userId ?? this.userId,
       data: data ?? this.data,
       ganhos: ganhos ?? this.ganhos,

@@ -1,7 +1,8 @@
 /// Model para gastos/despesas do usuário
 /// Alinhado 100% com backend e Supabase
 class GastoModel {
-  final String? id; // UUID String para compatibilidade total com Supabase
+  final int? localId; // ID local SQLite (INTEGER AUTOINCREMENT)
+  final String? remoteId; // UUID String para backend/Supabase
   final String? userId; // user_id String para sincronização
   final DateTime data;
   final String categoria;
@@ -11,7 +12,8 @@ class GastoModel {
   final DateTime? updatedAt; // updated_at do Supabase
 
   GastoModel({
-    this.id,
+    this.localId,
+    this.remoteId,
     this.userId,
     required this.data,
     required this.categoria,
@@ -30,7 +32,8 @@ class GastoModel {
       'data_registro': dataRegistro.toIso8601String(),
     };
     
-    if (id != null) map['id'] = id!;
+    if (localId != null) map['local_id'] = localId!;
+    if (remoteId != null) map['remote_id'] = remoteId!;
     if (userId != null) map['user_id'] = userId!;
     if (updatedAt != null) map['updated_at'] = updatedAt!.toIso8601String();
     
@@ -39,7 +42,8 @@ class GastoModel {
 
   factory GastoModel.fromMap(Map<String, dynamic> map) {
     return GastoModel(
-      id: map['id']?.toString(),
+      localId: map['local_id'] as int?,
+      remoteId: map['remote_id']?.toString(),
       userId: map['user_id']?.toString(),
       data: DateTime.parse(map['data']),
       categoria: map['categoria'] ?? '',
@@ -50,10 +54,11 @@ class GastoModel {
     );
   }
 
-  // Método fromJson necessário para sincronização
+  // Método fromJson necessário para sincronização (backend retorna 'id' como UUID)
   factory GastoModel.fromJson(Map<String, dynamic> json) {
     return GastoModel(
-      id: json['id']?.toString(),
+      localId: null, // Backend não tem localId
+      remoteId: json['id']?.toString(),
       userId: json['user_id']?.toString(),
       data: DateTime.parse(json['data']),
       categoria: json['categoria'] ?? '',
@@ -64,13 +69,26 @@ class GastoModel {
     );
   }
 
-  // Método toJson para sincronização
+  // Método toJson para sincronização (backend espera 'id' como UUID)
   Map<String, dynamic> toJson() {
-    return toMap();
+    final map = {
+      'data': data.toIso8601String().split('T')[0],
+      'categoria': categoria,
+      'valor': valor,
+      'descricao': descricao,
+      'data_registro': dataRegistro.toIso8601String(),
+    };
+    
+    if (remoteId != null) map['id'] = remoteId!;
+    if (userId != null) map['user_id'] = userId!;
+    if (updatedAt != null) map['updated_at'] = updatedAt!.toIso8601String();
+    
+    return map;
   }
 
   GastoModel copyWith({
-    String? id,
+    int? localId,
+    String? remoteId,
     String? userId,
     DateTime? data,
     String? categoria,
@@ -80,7 +98,8 @@ class GastoModel {
     DateTime? updatedAt,
   }) {
     return GastoModel(
-      id: id ?? this.id,
+      localId: localId ?? this.localId,
+      remoteId: remoteId ?? this.remoteId,
       userId: userId ?? this.userId,
       data: data ?? this.data,
       categoria: categoria ?? this.categoria,

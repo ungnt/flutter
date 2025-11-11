@@ -12,7 +12,8 @@
 
 6. **Backend rodando separado**
 
-7. **SUPABASE NÃO VAI SER USADO** - 
+7. **SUPABASE NÃO VAI SER USADO** -
+8. 
 
 
 
