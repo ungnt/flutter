@@ -118,7 +118,7 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
           observacoes: _observacoesController.text,
           dataRegistro: DateTime.now(),
         );
-        await _db.saveTrabalho(trabalho);
+        await _db.insertTrabalho(trabalho);
 
         if (_showGastoForm && _valorGastoController.text.isNotEmpty) {
           final gasto = GastoModel(
@@ -128,7 +128,7 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
             descricao: _descricaoGastoController.text,
             dataRegistro: DateTime.now(),
           );
-          await _db.saveGasto(gasto);
+          await _db.insertGasto(gasto);
         }
 
         if (_showManutencaoForm && _valorManutencaoController.text.isNotEmpty) {
@@ -140,7 +140,7 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
             descricao: _descricaoManutencaoController.text,
             dataRegistro: DateTime.now(),
           );
-          await _db.saveManutencao(manutencao);
+          await _db.insertManutencao(manutencao);
         }
 
         _clearForm();
