@@ -11,6 +11,11 @@
         android:resizeableActivity="true"
         android:supportsRtl="true">
 
+        <!-- Samsung Multi-Window Library (opcional) -->
+        <uses-library 
+            android:name="com.sec.android.app.multiwindow" 
+            android:required="false" />
+
         <!-- Suporte Multi-Window Samsung -->
         <meta-data 
             android:name="com.sec.android.support.multiwindow" 
@@ -25,6 +30,11 @@
         <meta-data 
             android:name="com.samsung.android.sdk.multiwindow.penwindow.enable" 
             android:value="true" />
+        
+        <!-- Suporte Freeform Mode (Xiaomi, Oppo, etc) -->
+        <meta-data 
+            android:name="android.allow_multiple_resumed_activities" 
+            android:value="true" />
 
         <activity
             android:name=".MainActivity"
@@ -38,11 +48,11 @@
             android:supportsPictureInPicture="true">
 
             <layout
-                android:minWidth="220dp"
-                android:minHeight="220dp"
-                android:defaultWidth="500dp"
-                android:defaultHeight="500dp"
-                android:gravity="center" />
+                android:minWidth="300dp"
+                android:minHeight="450dp"
+                android:defaultWidth="600dp"
+                android:defaultHeight="800dp"
+                android:gravity="top|end" />
 
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
