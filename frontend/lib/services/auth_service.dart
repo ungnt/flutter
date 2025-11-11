@@ -1,32 +1,5 @@
-import 'database_service.dart';
 import 'local_session_service.dart';
 
-/// Estados de sincronização
-enum SyncStatus {
-  idle,
-  syncing,
-  success,
-  error,
-}
-
-/// Resultado das operações de sincronização
-class SyncResult {
-  final bool success;
-  final String message;
-  final int? synced;
-  final int? conflicts;
-  final List<String> errors;
-
-  SyncResult({
-    required this.success,
-    required this.message,
-    this.synced,
-    this.conflicts,
-    this.errors = const [],
-  });
-}
-
-/// Serviço de autenticação que delega gerenciamento de sessão para LocalSessionService
 class AuthService {
   static final _sessionService = LocalSessionService.instance;
 

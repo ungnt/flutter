@@ -16,7 +16,7 @@ dependencies:
   # Internacionalização e formatação
   intl: ^0.18.1
   
-  # Banco de dados local
+  # Banco de dados local (temporário até refatorar todas as telas)
   sqflite: ^2.3.0
   sqflite_common_ffi_web: ^0.4.0
   path_provider: ^2.1.1

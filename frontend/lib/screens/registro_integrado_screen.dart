@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../services/database_service.dart';
+import '../services/trabalho_service.dart';
+import '../services/gasto_service.dart';
+import '../services/manutencao_service.dart';
 import '../models/trabalho_model.dart';
 import '../models/gasto_model.dart';
 import '../models/manutencao_model.dart';
+import '../utils/numeric_parser.dart';
 
 
 class RegistroIntegradoScreen extends StatefulWidget {
@@ -15,20 +18,16 @@ class RegistroIntegradoScreen extends StatefulWidget {
 
 class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final DatabaseService _db = DatabaseService.instance;
   final _formKey = GlobalKey<FormState>();
   
-  // Controladores para Trabalho
   final _ganhosController = TextEditingController();
   final _kmController = TextEditingController();
   final _horasController = TextEditingController();
   final _observacoesController = TextEditingController();
   
-  // Controladores para Gastos
   final _valorGastoController = TextEditingController();
   final _descricaoGastoController = TextEditingController();
   
-  // Controladores para Manutenções
   final _valorManutencaoController = TextEditingController();
   final _kmManutencaoController = TextEditingController();
   final _descricaoManutencaoController = TextEditingController();
@@ -43,7 +42,8 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
   List<GastoModel> _gastos = [];
   List<ManutencaoModel> _manutencao = [];
   
-  bool _isLoading = false;
+  bool _isInitializing = false;
+  bool _isSaving = false;
   bool _showGastoForm = false;
   bool _showManutencaoForm = false;
 
@@ -70,91 +70,122 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+    setState(() => _isInitializing = true);
+    
+    _categoriasGasto = ['Combustível', 'Manutenção', 'Multas/IPVA', 'Alimentação', 'Equipamentos', 'Documentação', 'Pedágio', 'Estacionamento', 'Lavagem', 'Outros'];
+    _tiposManutencao = ['Troca de óleo', 'Revisão geral', 'Pneus', 'Freios', 'Filtros', 'Velas', 'Correia', 'Relação', 'Óleo de freio', 'Outros'];
+    
+    if (_categoriasGasto.isNotEmpty) {
+      _selectedCategoriaGasto = _categoriasGasto.first;
+    }
+    if (_tiposManutencao.isNotEmpty) {
+      _selectedTipoManutencao = _tiposManutencao.first;
+    }
+    
     await Future.wait([
-      _loadCategorias(),
-      _loadTipos(),
       _loadTrabalhos(),
       _loadGastos(),
       _loadManutencoes(),
     ]);
-    setState(() => _isLoading = false);
-  }
-
-  Future<void> _loadCategorias() async {
-    _categoriasGasto = await _db.getCategoriasGastos();
-    if (_categoriasGasto.isNotEmpty) {
-      _selectedCategoriaGasto = _categoriasGasto.first;
-    }
-  }
-
-  Future<void> _loadTipos() async {
-    _tiposManutencao = await _db.getTiposManutencao();
-    if (_tiposManutencao.isNotEmpty) {
-      _selectedTipoManutencao = _tiposManutencao.first;
-    }
+    
+    setState(() => _isInitializing = false);
   }
 
   Future<void> _loadTrabalhos() async {
-    _trabalhos = await _db.getTrabalhos();
+    final result = await TrabalhoService.getAll();
+    if (result.success && result.data != null) {
+      setState(() => _trabalhos = result.data!);
+    }
   }
 
   Future<void> _loadGastos() async {
-    _gastos = await _db.getGastos();
+    final result = await GastoService.getAll();
+    if (result.success && result.data != null) {
+      setState(() => _gastos = result.data!);
+    }
   }
 
   Future<void> _loadManutencoes() async {
-    _manutencao = await _db.getManutencoes();
+    final result = await ManutencaoService.getAll();
+    if (result.success && result.data != null) {
+      setState(() => _manutencao = result.data!);
+    }
   }
 
   Future<void> _saveRegistroCompleto() async {
-    if (_formKey.currentState!.validate()) {
-      try {
-        final trabalho = TrabalhoModel(
+    if (!_formKey.currentState!.validate()) return;
+    
+    setState(() => _isSaving = true);
+    
+    try {
+      final ganhos = NumericParser.parseDouble(_ganhosController.text);
+      final km = NumericParser.parseDouble(_kmController.text);
+      final horas = NumericParser.parseDouble(_horasController.text);
+      
+      final trabalho = TrabalhoModel(
+        data: _selectedDate,
+        ganhos: ganhos,
+        km: km,
+        horas: horas,
+        observacoes: _observacoesController.text,
+        dataRegistro: DateTime.now(),
+      );
+      
+      final trabalhoResult = await TrabalhoService.create(trabalho);
+      if (!trabalhoResult.success) {
+        throw Exception(trabalhoResult.errorMessage ?? 'Erro ao salvar trabalho');
+      }
+
+      if (_showGastoForm && _valorGastoController.text.isNotEmpty) {
+        final valor = NumericParser.parseDouble(_valorGastoController.text);
+        final gasto = GastoModel(
           data: _selectedDate,
-          ganhos: double.parse(_ganhosController.text),
-          km: double.parse(_kmController.text),
-          horas: double.parse(_horasController.text),
-          observacoes: _observacoesController.text,
+          categoria: _selectedCategoriaGasto,
+          valor: valor,
+          descricao: _descricaoGastoController.text,
           dataRegistro: DateTime.now(),
         );
-        await _db.insertTrabalho(trabalho);
-
-        if (_showGastoForm && _valorGastoController.text.isNotEmpty) {
-          final gasto = GastoModel(
-            data: _selectedDate,
-            categoria: _selectedCategoriaGasto,
-            valor: double.parse(_valorGastoController.text),
-            descricao: _descricaoGastoController.text,
-            dataRegistro: DateTime.now(),
-          );
-          await _db.insertGasto(gasto);
-        }
-
-        if (_showManutencaoForm && _valorManutencaoController.text.isNotEmpty) {
-          final manutencao = ManutencaoModel(
-            data: _selectedDate,
-            tipo: _selectedTipoManutencao,
-            valor: double.parse(_valorManutencaoController.text),
-            kmAtual: double.parse(_kmManutencaoController.text),
-            descricao: _descricaoManutencaoController.text,
-            dataRegistro: DateTime.now(),
-          );
-          await _db.insertManutencao(manutencao);
-        }
-
-        _clearForm();
-        _loadData();
         
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registro salvo com sucesso!')),
+        final gastoResult = await GastoService.create(gasto);
+        if (!gastoResult.success) {
+          throw Exception(gastoResult.errorMessage ?? 'Erro ao salvar gasto');
+        }
+      }
+
+      if (_showManutencaoForm && _valorManutencaoController.text.isNotEmpty) {
+        final valor = NumericParser.parseDouble(_valorManutencaoController.text);
+        final kmAtual = NumericParser.parseDouble(_kmManutencaoController.text);
+        
+        final manutencao = ManutencaoModel(
+          data: _selectedDate,
+          tipo: _selectedTipoManutencao,
+          valor: valor,
+          kmAtual: kmAtual,
+          descricao: _descricaoManutencaoController.text,
+          dataRegistro: DateTime.now(),
         );
-      } catch (e) {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao salvar: $e')),
-        );
+        
+        final manutencaoResult = await ManutencaoService.create(manutencao);
+        if (!manutencaoResult.success) {
+          throw Exception(manutencaoResult.errorMessage ?? 'Erro ao salvar manutenção');
+        }
+      }
+
+      _clearForm();
+      await _loadData();
+      
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Registro salvo com sucesso!')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao salvar: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
       }
     }
   }
@@ -242,8 +273,12 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
                 prefixIcon: Icon(Icons.attach_money),
                 border: OutlineInputBorder(),
               ),
-              keyboardType: TextInputType.number,
-              validator: (value) => value?.isEmpty == true ? 'Campo obrigatório' : null,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              validator: (value) {
+                if (value?.isEmpty == true) return 'Campo obrigatório';
+                if (NumericParser.parseDoubleOrNull(value) == null) return 'Valor inválido';
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             
@@ -254,8 +289,12 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
                 prefixIcon: Icon(Icons.speed),
                 border: OutlineInputBorder(),
               ),
-              keyboardType: TextInputType.number,
-              validator: (value) => value?.isEmpty == true ? 'Campo obrigatório' : null,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              validator: (value) {
+                if (value?.isEmpty == true) return 'Campo obrigatório';
+                if (NumericParser.parseDoubleOrNull(value) == null) return 'Valor inválido';
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             
@@ -266,8 +305,12 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
                 prefixIcon: Icon(Icons.access_time),
                 border: OutlineInputBorder(),
               ),
-              keyboardType: TextInputType.number,
-              validator: (value) => value?.isEmpty == true ? 'Campo obrigatório' : null,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              validator: (value) {
+                if (value?.isEmpty == true) return 'Campo obrigatório';
+                if (NumericParser.parseDoubleOrNull(value) == null) return 'Valor inválido';
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             
@@ -323,7 +366,13 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
                               prefixIcon: Icon(Icons.attach_money),
                               border: OutlineInputBorder(),
                             ),
-                            keyboardType: TextInputType.number,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            validator: _showGastoForm ? (value) {
+                              if (value?.isNotEmpty == true && NumericParser.parseDoubleOrNull(value) == null) {
+                                return 'Valor inválido';
+                              }
+                              return null;
+                            } : null,
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
@@ -383,7 +432,13 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
                               prefixIcon: Icon(Icons.attach_money),
                               border: OutlineInputBorder(),
                             ),
-                            keyboardType: TextInputType.number,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            validator: _showManutencaoForm ? (value) {
+                              if (value?.isNotEmpty == true && NumericParser.parseDoubleOrNull(value) == null) {
+                                return 'Valor inválido';
+                              }
+                              return null;
+                            } : null,
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
@@ -393,7 +448,13 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
                               prefixIcon: Icon(Icons.speed),
                               border: OutlineInputBorder(),
                             ),
-                            keyboardType: TextInputType.number,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            validator: _showManutencaoForm ? (value) {
+                              if (value?.isNotEmpty == true && NumericParser.parseDoubleOrNull(value) == null) {
+                                return 'Valor inválido';
+                              }
+                              return null;
+                            } : null,
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
@@ -413,16 +474,25 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
             const SizedBox(height: 24),
 
             ElevatedButton(
-              onPressed: _saveRegistroCompleto,
+              onPressed: _isSaving ? null : _saveRegistroCompleto,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.all(16),
                 backgroundColor: Theme.of(context).primaryColor,
                 foregroundColor: Colors.white,
               ),
-              child: const Text(
-                'Salvar Registro Completo',
-                style: TextStyle(fontSize: 16),
-              ),
+              child: _isSaving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text(
+                      'Salvar Registro Completo',
+                      style: TextStyle(fontSize: 16),
+                    ),
             ),
           ],
         ),
@@ -431,20 +501,31 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
   }
 
   Widget _buildHistoricoTab() {
-    if (_isLoading) {
+    if (_isInitializing) {
       return const Center(child: CircularProgressIndicator());
     }
 
     if (_trabalhos.isEmpty) {
-      return const Center(
-        child: Text(
-          'Nenhum registro encontrado',
-          style: TextStyle(fontSize: 16),
+      return RefreshIndicator(
+        onRefresh: _loadData,
+        child: ListView(
+          children: const [
+            SizedBox(height: 200),
+            Center(
+              child: Text(
+                'Nenhum registro encontrado\nPuxe para atualizar',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          ],
         ),
       );
     }
 
-    return ListView.builder(
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      child: ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _trabalhos.length,
       itemBuilder: (context, index) {
@@ -500,11 +581,12 @@ class _RegistroIntegradoScreenState extends State<RegistroIntegradoScreen> with 
           ),
         );
       },
+      ),
     );
   }
 
   Widget _buildResumoTab() {
-    if (_isLoading) {
+    if (_isInitializing) {
       return const Center(child: CircularProgressIndicator());
     }
 
