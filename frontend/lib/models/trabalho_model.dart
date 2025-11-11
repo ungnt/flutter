@@ -25,6 +25,9 @@ class TrabalhoModel {
     this.updatedAt,
   });
 
+  // Getter para compatibilidade com código legado
+  int? get id => localId;
+
   Map<String, dynamic> toMap() {
     final map = {
       'data': data.toIso8601String().split('T')[0], // Salvar apenas a data YYYY-MM-DD

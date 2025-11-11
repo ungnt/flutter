@@ -156,56 +156,89 @@ class DatabaseService {
     }
 
     // Migração v3 → v4: Adicionar dual-ID system (remote_id, user_id, updated_at)
+    // Usa table recreation para compatibilidade com SQLite antigo (Android)
     if (oldVersion < 4) {
       await db.transaction((txn) async {
-        // Verificar se as tabelas existem e adicionar colunas necessárias
-        
-        // Tabela trabalho
+        // Verificar se já tem o novo schema
         final trabalhoColumns = await txn.rawQuery('PRAGMA table_info(trabalho)');
         final hasLocalId = trabalhoColumns.any((col) => col['name'] == 'local_id');
-        final hasRemoteId = trabalhoColumns.any((col) => col['name'] == 'remote_id');
         
         if (!hasLocalId) {
-          // Renomear id para local_id
-          await txn.execute('ALTER TABLE trabalho RENAME COLUMN id TO local_id');
-        }
-        
-        if (!hasRemoteId) {
-          await txn.execute('ALTER TABLE trabalho ADD COLUMN remote_id TEXT');
-          await txn.execute('ALTER TABLE trabalho ADD COLUMN user_id TEXT');
-          await txn.execute('ALTER TABLE trabalho ADD COLUMN updated_at TEXT');
+          // TABELA TRABALHO: Recreate com novo schema
+          await txn.execute('ALTER TABLE trabalho RENAME TO trabalho_old');
+          
+          await txn.execute('''
+            CREATE TABLE trabalho (
+              local_id INTEGER PRIMARY KEY AUTOINCREMENT,
+              remote_id TEXT UNIQUE,
+              user_id TEXT,
+              data TEXT NOT NULL,
+              ganhos REAL NOT NULL,
+              km REAL NOT NULL,
+              horas REAL NOT NULL,
+              observacoes TEXT,
+              data_registro TEXT NOT NULL,
+              updated_at TEXT
+            )
+          ''');
+          
+          await txn.execute('''
+            INSERT INTO trabalho (local_id, data, ganhos, km, horas, observacoes, data_registro)
+            SELECT id, data, ganhos, km, horas, observacoes, data_registro FROM trabalho_old
+          ''');
+          
+          await txn.execute('DROP TABLE trabalho_old');
           await txn.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_trabalho_remote_id ON trabalho(remote_id)');
-        }
-
-        // Tabela gastos
-        final gastosColumns = await txn.rawQuery('PRAGMA table_info(gastos)');
-        final gastosHasLocalId = gastosColumns.any((col) => col['name'] == 'local_id');
-        final gastosHasRemoteId = gastosColumns.any((col) => col['name'] == 'remote_id');
-        
-        if (!gastosHasLocalId) {
-          await txn.execute('ALTER TABLE gastos RENAME COLUMN id TO local_id');
-        }
-        
-        if (!gastosHasRemoteId) {
-          await txn.execute('ALTER TABLE gastos ADD COLUMN remote_id TEXT');
-          await txn.execute('ALTER TABLE gastos ADD COLUMN user_id TEXT');
-          await txn.execute('ALTER TABLE gastos ADD COLUMN updated_at TEXT');
+          
+          // TABELA GASTOS: Recreate com novo schema
+          await txn.execute('ALTER TABLE gastos RENAME TO gastos_old');
+          
+          await txn.execute('''
+            CREATE TABLE gastos (
+              local_id INTEGER PRIMARY KEY AUTOINCREMENT,
+              remote_id TEXT UNIQUE,
+              user_id TEXT,
+              data TEXT NOT NULL,
+              categoria TEXT NOT NULL,
+              valor REAL NOT NULL,
+              descricao TEXT,
+              data_registro TEXT NOT NULL,
+              updated_at TEXT
+            )
+          ''');
+          
+          await txn.execute('''
+            INSERT INTO gastos (local_id, data, categoria, valor, descricao, data_registro)
+            SELECT id, data, categoria, valor, descricao, data_registro FROM gastos_old
+          ''');
+          
+          await txn.execute('DROP TABLE gastos_old');
           await txn.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_gastos_remote_id ON gastos(remote_id)');
-        }
-
-        // Tabela manutencao
-        final manutencaoColumns = await txn.rawQuery('PRAGMA table_info(manutencao)');
-        final manutencaoHasLocalId = manutencaoColumns.any((col) => col['name'] == 'local_id');
-        final manutencaoHasRemoteId = manutencaoColumns.any((col) => col['name'] == 'remote_id');
-        
-        if (!manutencaoHasLocalId) {
-          await txn.execute('ALTER TABLE manutencao RENAME COLUMN id TO local_id');
-        }
-        
-        if (!manutencaoHasRemoteId) {
-          await txn.execute('ALTER TABLE manutencao ADD COLUMN remote_id TEXT');
-          await txn.execute('ALTER TABLE manutencao ADD COLUMN user_id TEXT');
-          await txn.execute('ALTER TABLE manutencao ADD COLUMN updated_at TEXT');
+          
+          // TABELA MANUTENCAO: Recreate com novo schema
+          await txn.execute('ALTER TABLE manutencao RENAME TO manutencao_old');
+          
+          await txn.execute('''
+            CREATE TABLE manutencao (
+              local_id INTEGER PRIMARY KEY AUTOINCREMENT,
+              remote_id TEXT UNIQUE,
+              user_id TEXT,
+              data TEXT NOT NULL,
+              tipo TEXT NOT NULL,
+              valor REAL NOT NULL,
+              km_atual REAL NOT NULL,
+              descricao TEXT,
+              data_registro TEXT NOT NULL,
+              updated_at TEXT
+            )
+          ''');
+          
+          await txn.execute('''
+            INSERT INTO manutencao (local_id, data, tipo, valor, km_atual, descricao, data_registro)
+            SELECT id, data, tipo, valor, km_atual, descricao, data_registro FROM manutencao_old
+          ''');
+          
+          await txn.execute('DROP TABLE manutencao_old');
           await txn.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_manutencao_remote_id ON manutencao(remote_id)');
         }
       });
@@ -317,8 +350,8 @@ class DatabaseService {
     return await db.update(
       'trabalho',
       trabalho.toMap(),
-      where: 'id = ?',
-      whereArgs: [trabalho.id],
+      where: 'local_id = ?',
+      whereArgs: [trabalho.localId],
     );
   }
 
@@ -326,7 +359,7 @@ class DatabaseService {
     final db = await database;
     return await db.delete(
       'trabalho',
-      where: 'id = ?',
+      where: 'local_id = ?',
       whereArgs: [id],
     );
   }
@@ -379,8 +412,8 @@ class DatabaseService {
     return await db.update(
       'gastos',
       gasto.toMap(),
-      where: 'id = ?',
-      whereArgs: [gasto.id],
+      where: 'local_id = ?',
+      whereArgs: [gasto.localId],
     );
   }
 
@@ -388,7 +421,7 @@ class DatabaseService {
     final db = await database;
     return await db.delete(
       'gastos',
-      where: 'id = ?',
+      where: 'local_id = ?',
       whereArgs: [id],
     );
   }
@@ -471,16 +504,16 @@ class DatabaseService {
     return await db.update(
       'manutencao',
       manutencao.toMap(),
-      where: 'id = ?',
-      whereArgs: [manutencao.id],
+      where: 'local_id = ?',
+      whereArgs: [manutencao.localId],
     );
   }
 
-  Future<int> deleteManutencao(String id) async {
+  Future<int> deleteManutencao(int id) async {
     final db = await database;
     return await db.delete(
       'manutencao',
-      where: 'id = ?',
+      where: 'local_id = ?',
       whereArgs: [id],
     );
   }
@@ -549,21 +582,21 @@ class DatabaseService {
   // Métodos getById necessários para sync_service.dart
   Future<GastoModel?> getGastoById(int id) async {
     final db = await database;
-    final maps = await db.query('gastos', where: 'id = ?', whereArgs: [id]);
+    final maps = await db.query('gastos', where: 'local_id = ?', whereArgs: [id]);
     if (maps.isNotEmpty) return GastoModel.fromMap(maps.first);
     return null;
   }
 
   Future<ManutencaoModel?> getManutencaoById(int id) async {
     final db = await database;
-    final maps = await db.query('manutencao', where: 'id = ?', whereArgs: [id]);
+    final maps = await db.query('manutencao', where: 'local_id = ?', whereArgs: [id]);
     if (maps.isNotEmpty) return ManutencaoModel.fromMap(maps.first);
     return null;
   }
 
   Future<TrabalhoModel?> getTrabalhoById(int id) async {
     final db = await database;
-    final maps = await db.query('trabalho', where: 'id = ?', whereArgs: [id]);
+    final maps = await db.query('trabalho', where: 'local_id = ?', whereArgs: [id]);
     if (maps.isNotEmpty) return TrabalhoModel.fromMap(maps.first);
     return null;
   }
