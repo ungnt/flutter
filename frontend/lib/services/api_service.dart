@@ -2,23 +2,23 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'backend_config_service.dart';
 import 'local_session_service.dart';
-import 'sync_service.dart';
 
 class ApiService {
-  // URL dinâmica baseada na configuração atual
   static String get _baseUrl => BackendConfigService.instance.getBaseUrl();
-  static String _getEndpointUrl(String endpoint) => BackendConfigService.instance.getEndpointUrl(endpoint);
+  static String _getEndpointUrl(String endpoint) {
+    final base = BackendConfigService.instance.getBaseUrl();
+    final cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+    return '$base/api/$cleanEndpoint';
+  }
   static Duration get _timeout => BackendConfigService.instance.getTimeout();
   
   static final _sessionService = LocalSessionService.instance;
 
-  // Headers padrão
   static Map<String, String> get _defaultHeaders => {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
 
-  // Headers com autorização
   static Future<Map<String, String>> get _authHeaders async {
     final token = await _sessionService.getToken();
     return {
@@ -27,7 +27,6 @@ class ApiService {
     };
   }
 
-  // Gerenciamento de token (delegado ao LocalSessionService)
   static Future<String?> getToken() async {
     return _sessionService.getToken();
   }
@@ -44,7 +43,6 @@ class ApiService {
     return _sessionService.isAuthenticated();
   }
 
-  // Gerenciamento de usuário (delegado ao LocalSessionService)
   static Future<Map<String, dynamic>?> getUserData() async {
     return _sessionService.getUserData();
   }
@@ -57,7 +55,6 @@ class ApiService {
     return _sessionService.clearSession();
   }
 
-  // Autenticação
   static Future<ApiResponse> register({
     required String name,
     required String email,
@@ -99,7 +96,6 @@ class ApiService {
 
       final result = _handleResponse(response);
       
-      // Salvar token e dados do usuário se login foi bem-sucedido
       if (result.success && result.data != null) {
         if (result.data!['token'] != null) {
           await saveToken(result.data!['token']);
@@ -107,9 +103,6 @@ class ApiService {
         if (result.data!['user'] != null) {
           await saveUserData(result.data!['user']);
         }
-        
-        // Baixar dados do backend após login bem-sucedido
-        await SyncService.instance.downloadAllDataFromBackend();
       }
 
       return result;
@@ -123,24 +116,17 @@ class ApiService {
 
   static Future<ApiResponse> logout() async {
     try {
-      final response = await http.post(
-        Uri.parse(_getEndpointUrl('auth/logout')),
-        headers: await _authHeaders,
-      ).timeout(_timeout);
-
-      // Limpar dados locais
-      await removeToken();
-      await clearUserData();
-      
-      return _handleResponse(response);
-    } catch (e) {
-      // Mesmo que falhe no servidor, remove token localmente
       await removeToken();
       await clearUserData();
       
       return ApiResponse(
+        success: true,
+        message: 'Logout realizado com sucesso',
+      );
+    } catch (e) {
+      return ApiResponse(
         success: false,
-        message: 'Erro de conexão: $e',
+        message: 'Erro ao fazer logout: $e',
       );
     }
   }
@@ -154,7 +140,6 @@ class ApiService {
 
       final result = _handleResponse(response);
       
-      // Atualizar dados do usuário se bem-sucedido
       if (result.success && result.data != null) {
         await saveUserData(result.data!);
       }
@@ -168,25 +153,7 @@ class ApiService {
     }
   }
 
-  // CRUD APIs - Trabalho
-  static Future<ApiResponse> uploadTrabalhos(List<Map<String, dynamic>> trabalhos) async {
-    try {
-      final response = await http.post(
-        Uri.parse(_getEndpointUrl('trabalho/sync')),
-        headers: await _authHeaders,
-        body: jsonEncode({'trabalhos': trabalhos}),
-      ).timeout(_timeout);
-
-      return _handleResponse(response);
-    } catch (e) {
-      return ApiResponse(
-        success: false,
-        message: 'Erro ao sincronizar trabalhos: $e',
-      );
-    }
-  }
-
-  static Future<ApiResponse> downloadTrabalhos() async {
+  static Future<ApiResponse> getTrabalhos() async {
     try {
       final response = await http.get(
         Uri.parse(_getEndpointUrl('trabalho/')),
@@ -197,30 +164,62 @@ class ApiService {
     } catch (e) {
       return ApiResponse(
         success: false,
-        message: 'Erro ao baixar trabalhos: $e',
+        message: 'Erro ao buscar trabalhos: $e',
       );
     }
   }
 
-  // CRUD APIs - Gastos
-  static Future<ApiResponse> uploadGastos(List<Map<String, dynamic>> gastos) async {
+  static Future<ApiResponse> createTrabalho(Map<String, dynamic> trabalho) async {
     try {
       final response = await http.post(
-        Uri.parse(_getEndpointUrl('gastos/sync')),
+        Uri.parse(_getEndpointUrl('trabalho/')),
         headers: await _authHeaders,
-        body: jsonEncode({'gastos': gastos}),
+        body: jsonEncode(trabalho),
       ).timeout(_timeout);
 
       return _handleResponse(response);
     } catch (e) {
       return ApiResponse(
         success: false,
-        message: 'Erro ao sincronizar gastos: $e',
+        message: 'Erro ao criar trabalho: $e',
       );
     }
   }
 
-  static Future<ApiResponse> downloadGastos() async {
+  static Future<ApiResponse> updateTrabalho(String id, Map<String, dynamic> trabalho) async {
+    try {
+      final response = await http.put(
+        Uri.parse(_getEndpointUrl('trabalho/$id')),
+        headers: await _authHeaders,
+        body: jsonEncode(trabalho),
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro ao atualizar trabalho: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> deleteTrabalho(String id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(_getEndpointUrl('trabalho/$id')),
+        headers: await _authHeaders,
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro ao deletar trabalho: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> getGastos() async {
     try {
       final response = await http.get(
         Uri.parse(_getEndpointUrl('gastos/')),
@@ -231,30 +230,62 @@ class ApiService {
     } catch (e) {
       return ApiResponse(
         success: false,
-        message: 'Erro ao baixar gastos: $e',
+        message: 'Erro ao buscar gastos: $e',
       );
     }
   }
 
-  // CRUD APIs - Manutenções
-  static Future<ApiResponse> uploadManutencao(List<Map<String, dynamic>> manutencoes) async {
+  static Future<ApiResponse> createGasto(Map<String, dynamic> gasto) async {
     try {
       final response = await http.post(
-        Uri.parse(_getEndpointUrl('manutencao/sync')),
+        Uri.parse(_getEndpointUrl('gastos/')),
         headers: await _authHeaders,
-        body: jsonEncode({'manutencao': manutencoes}),
+        body: jsonEncode(gasto),
       ).timeout(_timeout);
 
       return _handleResponse(response);
     } catch (e) {
       return ApiResponse(
         success: false,
-        message: 'Erro ao sincronizar manutenções: $e',
+        message: 'Erro ao criar gasto: $e',
       );
     }
   }
 
-  static Future<ApiResponse> downloadManutencoes() async {
+  static Future<ApiResponse> updateGasto(String id, Map<String, dynamic> gasto) async {
+    try {
+      final response = await http.put(
+        Uri.parse(_getEndpointUrl('gastos/$id')),
+        headers: await _authHeaders,
+        body: jsonEncode(gasto),
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro ao atualizar gasto: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> deleteGasto(String id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(_getEndpointUrl('gastos/$id')),
+        headers: await _authHeaders,
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro ao deletar gasto: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> getManutencoes() async {
     try {
       final response = await http.get(
         Uri.parse(_getEndpointUrl('manutencao/')),
@@ -265,7 +296,57 @@ class ApiService {
     } catch (e) {
       return ApiResponse(
         success: false,
-        message: 'Erro ao baixar manutenções: $e',
+        message: 'Erro ao buscar manutenções: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> createManutencao(Map<String, dynamic> manutencao) async {
+    try {
+      final response = await http.post(
+        Uri.parse(_getEndpointUrl('manutencao/')),
+        headers: await _authHeaders,
+        body: jsonEncode(manutencao),
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro ao criar manutenção: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> updateManutencao(String id, Map<String, dynamic> manutencao) async {
+    try {
+      final response = await http.put(
+        Uri.parse(_getEndpointUrl('manutencao/$id')),
+        headers: await _authHeaders,
+        body: jsonEncode(manutencao),
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro ao atualizar manutenção: $e',
+      );
+    }
+  }
+
+  static Future<ApiResponse> deleteManutencao(String id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse(_getEndpointUrl('manutencao/$id')),
+        headers: await _authHeaders,
+      ).timeout(_timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      return ApiResponse(
+        success: false,
+        message: 'Erro ao deletar manutenção: $e',
       );
     }
   }
