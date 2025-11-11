@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../services/database_service.dart';
+import '../services/api_service.dart';
 import '../models/trabalho_model.dart';
 import '../models/gasto_model.dart';
 import '../models/manutencao_model.dart';
@@ -16,7 +16,6 @@ class RelatoriosScreen extends StatefulWidget {
 }
 
 class _RelatoriosScreenState extends State<RelatoriosScreen> {
-  final DatabaseService _db = DatabaseService.instance;
   DateTime _dataInicio = DateTime.now().subtract(const Duration(days: 30));
   DateTime _dataFim = DateTime.now();
   
@@ -34,9 +33,24 @@ class _RelatoriosScreenState extends State<RelatoriosScreen> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     
-    _trabalhos = await _db.getTrabalhos(dataInicio: _dataInicio, dataFim: _dataFim);
-    _gastos = await _db.getGastos(dataInicio: _dataInicio, dataFim: _dataFim);
-    _manutencoes = await _db.getManutencoes(dataInicio: _dataInicio, dataFim: _dataFim);
+    final responseTrab = await ApiService.getTrabalhos(dataInicio: _dataInicio, dataFim: _dataFim);
+    final responseGastos = await ApiService.getGastos(dataInicio: _dataInicio, dataFim: _dataFim);
+    final responseManu = await ApiService.getManutencoes(dataInicio: _dataInicio, dataFim: _dataFim);
+    
+    if (responseTrab.success && responseTrab.data != null) {
+      final list = responseTrab.data!['trabalhos'] as List<dynamic>;
+      _trabalhos = list.map((t) => TrabalhoModel.fromMap(t)).toList();
+    }
+    
+    if (responseGastos.success && responseGastos.data != null) {
+      final list = responseGastos.data!['gastos'] as List<dynamic>;
+      _gastos = list.map((g) => GastoModel.fromMap(g)).toList();
+    }
+    
+    if (responseManu.success && responseManu.data != null) {
+      final list = responseManu.data!['manutencoes'] as List<dynamic>;
+      _manutencoes = list.map((m) => ManutencaoModel.fromMap(m)).toList();
+    }
     
     setState(() => _isLoading = false);
   }
