@@ -118,43 +118,55 @@ class _HomeScreenState extends State<HomeScreen> {
       // Trabalhos de hoje
       List<TrabalhoModel> trabalhosHoje = [];
       if (responseTrabHoje.success && responseTrabHoje.data != null) {
-        final list = responseTrabHoje.data!['trabalhos'] as List<dynamic>;
-        trabalhosHoje = list.map((t) => TrabalhoModel.fromMap(t)).toList();
+        final list = responseTrabHoje.data!['trabalhos'] as List<dynamic>?;
+        if (list != null) {
+          trabalhosHoje = list.map((t) => TrabalhoModel.fromMap(t)).toList();
+        }
       }
       
       // Gastos de hoje
       List<GastoModel> gastosHoje = [];
       if (responseGastosHoje.success && responseGastosHoje.data != null) {
-        final list = responseGastosHoje.data!['gastos'] as List<dynamic>;
-        gastosHoje = list.map((g) => GastoModel.fromMap(g)).toList();
+        final list = responseGastosHoje.data!['gastos'] as List<dynamic>?;
+        if (list != null) {
+          gastosHoje = list.map((g) => GastoModel.fromMap(g)).toList();
+        }
       }
       
       // Manutenções de hoje
       List<ManutencaoModel> manutencoesHoje = [];
       if (responseManuHoje.success && responseManuHoje.data != null) {
-        final list = responseManuHoje.data!['manutencoes'] as List<dynamic>;
-        manutencoesHoje = list.map((m) => ManutencaoModel.fromMap(m)).toList();
+        final list = responseManuHoje.data!['manutencoes'] as List<dynamic>?;
+        if (list != null) {
+          manutencoesHoje = list.map((m) => ManutencaoModel.fromMap(m)).toList();
+        }
       }
       
       // Trabalhos do mês
       List<TrabalhoModel> trabalhosMes = [];
       if (responseTrabMes.success && responseTrabMes.data != null) {
-        final list = responseTrabMes.data!['trabalhos'] as List<dynamic>;
-        trabalhosMes = list.map((t) => TrabalhoModel.fromMap(t)).toList();
+        final list = responseTrabMes.data!['trabalhos'] as List<dynamic>?;
+        if (list != null) {
+          trabalhosMes = list.map((t) => TrabalhoModel.fromMap(t)).toList();
+        }
       }
       
       // Gastos do mês
       List<GastoModel> gastosMes = [];
       if (responseGastosMes.success && responseGastosMes.data != null) {
-        final list = responseGastosMes.data!['gastos'] as List<dynamic>;
-        gastosMes = list.map((g) => GastoModel.fromMap(g)).toList();
+        final list = responseGastosMes.data!['gastos'] as List<dynamic>?;
+        if (list != null) {
+          gastosMes = list.map((g) => GastoModel.fromMap(g)).toList();
+        }
       }
       
       // Manutenções do mês
       List<ManutencaoModel> manutencoesMes = [];
       if (responseManuMes.success && responseManuMes.data != null) {
-        final list = responseManuMes.data!['manutencoes'] as List<dynamic>;
-        manutencoesMes = list.map((m) => ManutencaoModel.fromMap(m)).toList();
+        final list = responseManuMes.data!['manutencoes'] as List<dynamic>?;
+        if (list != null) {
+          manutencoesMes = list.map((m) => ManutencaoModel.fromMap(m)).toList();
+        }
       }
       
       // Calcular totais

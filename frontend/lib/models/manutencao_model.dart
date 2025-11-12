@@ -80,17 +80,15 @@ class ManutencaoModel {
   // Método toJson para sincronização (backend espera 'id' como UUID)
   Map<String, dynamic> toJson() {
     final map = {
-      'data': data.toIso8601String().split('T')[0],
+      'data': data.toIso8601String(),
       'tipo': tipo,
       'valor': valor,
       'km_atual': kmAtual,
       'descricao': descricao,
-      'data_registro': dataRegistro.toIso8601String(),
     };
     
     if (remoteId != null) map['id'] = remoteId!;
     if (userId != null) map['user_id'] = userId!;
-    if (updatedAt != null) map['updated_at'] = updatedAt!.toIso8601String();
     
     return map;
   }
